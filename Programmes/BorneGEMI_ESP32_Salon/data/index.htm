@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+    <meta http-equiv="Content-language" content="fr" />
+    <meta http-equiv="Pragma" content="no-cache" /> 
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta http-equiv="Content-Script-Type" content="text/javascript" />
+    <meta name="Description" content="Borne GEMI" />
+    <meta name="Author" content="Jean-Luc NAPOLITANO" />
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link href="/style.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <title>Borne GEMI</title>
+
+    <script type="text/javascript">
+      function RecoisPremiereInfos() {
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText.split(",");
+                document.getElementById("ipfix").value = texte[0];
+                document.getElementById("name").value = texte[1];
+                document.getElementById("ipgw").value = texte[2];
+                document.getElementById("ipdns").value = texte[3];
+                document.getElementById("subnet").value = texte[4];
+                document.getElementById("ipntp").value = texte[5];
+                document.getElementById("timeport").value = texte[6];
+                LOVSelection("timezone",texte[7]);
+                document.getElementById("webuser").value = texte[8];
+                document.getElementById("webpass").value = texte[9];
+                document.getElementById("ssid1").value = texte[10];
+                document.getElementById("psk1").value = texte[11];
+                document.getElementById("ssid2").value = texte[12];
+                document.getElementById("psk2").value = texte[13];
+                document.getElementById("ssid3").value = texte[14];
+                document.getElementById("psk3").value = texte[15];
+                document.getElementById("ssid4").value = texte[16];
+                document.getElementById("psk4").value = texte[17];
+                document.getElementById("vrss").value = texte[18];
+                document.getElementById("uid_nano").value = texte[19];
+                document.getElementById("access_key").value = texte[20];
+                document.getElementById("tajst").value = texte[21] + " °C";
+                document.getElementById("hetehiver").checked = texte[22] == 1 ? true : false;
+                document.getElementById("etehiver").checked = texte[23] == 1 ? true : false;
+                document.getElementById("ftpuser").value = texte[24];
+                document.getElementById("ftppass").value = texte[25];
+                document.getElementById("otapass").value = texte[26];
+                document.getElementById("HSTimeout").value = texte[27];
+                document.getElementById("log").checked = texte[28] == 1 ? true : false;;
+								document.getElementById("ip").innerHTML = texte[29];
+                document.getElementById("ssid").innerHTML = texte[30]; 
+                document.getElementById("testled").checked = texte[31] == 1 ? true : false;
+                window.clearInterval(timerunefois);
+                ListerRadios();
+                HeureEteHiver();
+              }
+            }
+          }
+        }
+        request.open("GET", "/ajaxparam", true);
+        request.send();
+      }
+      function HeureEteHiver() {
+        if (document.getElementById("hetehiver").checked = true) {
+          document.getElementById("letehiver").style.display = "none";
+          document.getElementById("cacher").style.display = "none";
+        } else {
+          document.getElementById("letehiver").style.display = "block";
+          document.getElementById("cacher").style.display = "block";
+        }
+      }
+    </script>
+    <script type="text/javascript">
+      var req_cde = new XMLHttpRequest();
+      //var timercde;
+      var req;
+      function Sauver() {
+        var heh = document.getElementById("hetehiver").checked == true ? 1 : 0;
+        var eh = document.getElementById("etehiver").checked == true ? 1 : 0;
+        var log = document.getElementById("log").checked == true ? 1 : 0;
+        var tl = document.getElementById("testled").checked == true ? 1 : 0;
+        var uidnano = document.getElementById("uid_nano").value;
+        var vrss = document.getElementById("vrss").value;
+        vrss = encodeURIComponent(vrss);
+        var acckey = document.getElementById("access_key").value;
+        acckey = encodeURIComponent(acckey);
+        req = "/ajaxsauve?ipfix=" + document.getElementById("ipfix").value;
+        req += "&nom=" + document.getElementById("name").value;
+        req += "&ipgw=" + document.getElementById("ipgw").value + "&ipdns=" + document.getElementById("ipdns").value + "&subnet=" + document.getElementById("subnet").value;
+        req += "&ipntp=" + document.getElementById("ipntp").value + "&tport=" + document.getElementById("timeport").value + "&tzone=" + document.getElementById("timezone").value;
+        req += "&webuser=" + document.getElementById("webuser").value + "&webpass=" + document.getElementById("webpass").value;
+        req += "&ssid1=" + document.getElementById("ssid1").value + "&psk1=" + document.getElementById("psk1").value;
+        req += "&ssid2=" + document.getElementById("ssid2").value + "&psk2=" + document.getElementById("psk2").value;
+        req += "&ssid3=" + document.getElementById("ssid3").value + "&psk3=" + document.getElementById("psk3").value;
+        req += "&ssid4=" + document.getElementById("ssid4").value + "&psk4=" + document.getElementById("psk4").value;
+        req += "&vrss=" + vrss + "&uidnano=" + uidnano + "&acckey=" + acckey;
+        req += "&tajst=" + document.getElementById("tajst").value;
+        req += "&hetehiver=" + heh + "&etehiver=" + eh + "&log=" + log;
+        req += "&ftpuser=" + document.getElementById("ftpuser").value + "&ftppass=" + document.getElementById("ftppass").value + "&otapass=" + document.getElementById("otapass").value;
+        req += "&hst=" + document.getElementById("HSTimeout").value;
+        req += "&tled=" + tl;
+        EnvoyerRequete();
+        creer_message(div_wait,"Une commande d'enregistrement a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre plus de 30s)");
+      }
+      function Micro() {
+        req = "/micro";
+        EnvoyerRequete();
+      }
+      function TestLEDs(ld) {
+        req = "/testled?ld=" + ld;
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText;
+                document.getElementById("reponse").innerHTML = "<b>Nota: </b> " + texte;
+              }
+            }
+          }
+        }
+        request.open("GET", req, true);
+        request.send();
+      }
+      function ListerRadios() {
+        req = "/ajaxlisteradios";
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText.split(",");
+                var lRadio = "<select id=\"station\">\n";
+                for (i=0; i<texte.length; i++) {
+                  lRadio += "<option value=\"" + texte[i] + "\"> " + texte[i] + " </option>\n";
+                }
+                lRadio += "</select>\n";
+                document.getElementById("lstradios").innerHTML = lRadio;
+              }
+            }
+          }
+        }
+        request.open("GET", req, true);
+        request.send();
+      }
+      function Tester() {
+        var ordre = document.getElementById('ordre').options[document.getElementById('ordre').selectedIndex].value;
+        var objet = document.getElementById('objet').options[document.getElementById('objet').selectedIndex].value;
+        var local = document.getElementById('local').options[document.getElementById('local').selectedIndex].value;
+        var couleur = document.getElementById('couleur').options[document.getElementById('couleur').selectedIndex].value;
+        var temps = document.getElementById('temps').options[document.getElementById('temps').selectedIndex].value;
+        var prenom = document.getElementById('prenom').options[document.getElementById('prenom').selectedIndex].value;
+        var prepos = document.getElementById('prepos').options[document.getElementById('prepos').selectedIndex].value;
+        var station = document.getElementById('station').options[document.getElementById('station').selectedIndex].value;
+        var valeur = document.getElementById("valeur").value;
+        var virgule = "";
+        req = "/ajaxcde?exec=";
+        if (ordre != "aucun") {
+          req += "ordre:" + ordre;
+          virgule = ",";
+        }
+        if (objet != "aucun") {
+          req += virgule + "object:" + objet;
+          virgule = ",";
+        }
+        if (local != "aucun") {
+          req += virgule + "location:" + local;
+          virgule = ",";
+        }
+        if (couleur != "aucun") {
+          req += virgule + "color:" + couleur;
+          virgule = ",";
+        }
+        if (temps != "aucun") {
+          req += virgule + "temps:" + temps;
+          virgule = ",";
+        }
+        if (prenom != "aucun") {
+          req += virgule + "prenom:" + prenom;
+          virgule = ",";
+        }
+        if (station != "aucun") {
+          req += virgule + "stations:" + station;
+          virgule = ",";
+        }
+        if (prepos != "aucun") {
+          req += virgule + "preposition:" + prepos;
+          virgule = ",";
+        }
+        EnvoyerRequete();
+        creer_message(div_wait,"La commande a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre plus de 30s)");
+      }
+      function EnvoyerRequete() {
+        req_cde.onerror = onError;
+        req_cde.onreadystatechange = function() {
+          //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+          if (req_cde.readyState == 4) {
+            //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+            if (req_cde.status == 200) {
+              if (req_cde.responseText != null) {
+                //window.clearInterval(timercde);
+                alert(req_cde.responseText.replaceAll('�','é'));
+                fin();
+                //window.location.reload();
+                return;
+              }
+            } else {
+              if (req_cde.responseText != null) {
+                fin();
+                //clearInterval(timercde);
+                alert(req_cde.responseText.replaceAll('�','é'));
+              }
+            }
+          }
+        }
+        req_cde.open("GET", req, true);
+        req_cde.send();
+      }
+    </script>
+    <!-- Recopie la valeur du select vers un champ input -->
+    <script type="text/javascript">
+      function codeTouche(evenement) { 
+        for (prop in evenement) { 
+          if(prop == 'which') return (evenement.which); 
+        } 
+        return(evenement.keyCode); 
+      } 
+      function scanTouche(evenement,typ) { 
+        var reCarSpeciaux = /[\x00\x08\x0D]/; 
+        var numCarValides = /[\d]/;
+        var floatCarValides = /[\d\.\d]/;
+        var ipCarValides = /[\d\.\d]/;
+        var macCarValides = /^[0-9A-Fa-f]/;
+        var hmsCarValides = /[\d\:\d]/;
+        var jmaCarValides = /[\d\/\d]/;
+        var codeDecimal = codeTouche(evenement);
+        var car = String.fromCharCode(codeDecimal); 
+        if (reCarSpeciaux.test(car)) {
+          return true;
+        } else {
+          if (typ == 'num') {
+            var autorisation = numCarValides.test(car);
+          } else if (typ == 'float') {
+            var autorisation = floatCarValides.test(car);
+          } else if (typ == 'ip') {
+            var autorisation = ipCarValides.test(car);
+          } else if (typ == 'mac') {
+            var autorisation = macCarValides.test(car);
+          } else if (typ == 'hms') {
+            var autorisation = hmsCarValides.test(car);
+          } else if (typ == 'jma') {
+            var autorisation = jmaCarValides.test(car);
+          } else if (typ == 'rien') {
+            var autorisation = false;
+          }
+           
+          return autorisation;
+        }
+      } 
+      function masqueSaisie(objet,format) {
+        var ch;
+        var ch_gauche, ch_droite;
+        var obj = document.getElementById(objet);
+
+        ch = obj.value;
+        ch.toString(); 
+       
+        switch (format) {
+        case "date":
+          if (((ch.slice(2,3)) != ("/") ) && (ch.length >= 3) ) {
+            ch_gauche = ch.slice(0,2);
+            ch_droite = ch.slice(2);
+            obj.value = ch_gauche + "/" + ch_droite;
+          }
+          if (((ch.slice(5,6)) != ("/") ) && (ch.length >= 6) ) {
+            ch_gauche = ch.slice(0,5);
+            ch_droite = ch.slice(5);
+            obj.value = ch_gauche + "/" + ch_droite;
+          }
+          break;
+        case "heure":
+          if (((ch.slice(2,3)) != (":") ) && (ch.length >= 3) ) {
+            ch_gauche = ch.slice(0,2);
+            ch_droite = ch.slice(2);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          if (((ch.slice(5,6)) != (":") ) && (ch.length >= 6) ) {
+            ch_gauche = ch.slice(0,5);
+            ch_droite = ch.slice(5);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          break;
+        case "ip":
+          if (((ch.slice(3,4)) != (".") ) && (ch.length >= 4) ) {
+            ch_gauche = ch.slice(0,3);
+            ch_droite = ch.slice(3);
+            obj.value = ch_gauche + "." + ch_droite;
+          }
+          if (((ch.slice(7,8)) != (".") ) && (ch.length >= 8) ) {
+            ch_gauche = ch.slice(0,7);
+            ch_droite = ch.slice(7);
+            obj.value = ch_gauche + "." + ch_droite;
+          }
+          if (((ch.slice(11,12)) != (".") ) && (ch.length >= 12) ) {
+            ch_gauche = ch.slice(0,11);
+            ch_droite = ch.slice(11);
+            obj.value = ch_gauche + "." + ch_droite;
+          }
+          break;
+        case "mac":
+          if (((ch.slice(2,3)) != (":") ) && (ch.length >= 3) ) {
+            ch_gauche = ch.slice(0,2);
+            ch_droite = ch.slice(2);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          if (((ch.slice(5,6)) != (":") ) && (ch.length >= 6) ) {
+            ch_gauche = ch.slice(0,5);
+            ch_droite = ch.slice(5);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          if (((ch.slice(8,9)) != (":") ) && (ch.length >= 9) ) {
+            ch_gauche = ch.slice(0,8);
+            ch_droite = ch.slice(8);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          if (((ch.slice(11,12)) != (":") ) && (ch.length >= 12) ) {
+            ch_gauche = ch.slice(0,11);
+            ch_droite = ch.slice(11);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          if (((ch.slice(14,15)) != (":") ) && (ch.length >= 15) ) {
+            ch_gauche = ch.slice(0,14);
+            ch_droite = ch.slice(14);
+            obj.value = ch_gauche + ":" + ch_droite;
+          }
+          obj.value = obj.value.toUpperCase();
+          break;
+        }
+        return;
+      }
+      function firstCap(obj) {
+        var str = obj.value.replace(/\s/g, '');
+        obj.value = str.toString().replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+      }
+      function AjustHour(champ, sens) {
+        var valInput = document.getElementById(champ).value;
+        var hm = valInput.split(":");
+        if (sens == 'plus') {
+          valInput = (hm[0] * 60) + (hm[1] * 1) + 5;
+        } else {
+          valInput = (hm[0] * 60) + (hm[1] * 1) - 5;
+        }
+        if (valInput < 0) valInput = 1425;
+        valInput = parseInt(valInput / 60, 10) + ":" + parseInt(valInput % 60, 10);
+        hm = valInput.split(":");
+        if (hm[0] > 23) {
+          hm[0] = 0;
+        }
+        if (hm[0] < 0) {
+          hm[0] = 23;
+        }
+        if (hm[1] > 60) {
+          hm[1] = 0;
+        }
+        if (hm[0] < 0) {
+          hm[0] = 45;
+        }
+        hm[0] = '00' + hm[0];
+        hm[1] = '00' + hm[1];
+        hm[0] = hm[0].substring(hm[0].length - 2);
+        hm[1] = hm[1].substring(hm[1].length - 2);
+        valInput = hm[0] + ":" + hm[1];
+        document.getElementById(champ).value = valInput;
+      }
+      function AjustNum(id_champ, sens, vmin, vmax, pas, lib) {
+        var valInput = document.getElementById(id_champ).value;
+        if (valInput == "undefined" || valInput == "NaN") {
+          valInput = vmin;
+        }
+        if (lib != '') {
+          valInput = (valInput.substring(0, valInput.indexOf(lib))) * 1;
+        } else {
+          valInput = valInput * 1;
+        }
+        if (sens == 'plus') {
+          valInput += pas;
+          if (valInput > vmax) {
+            valInput = vmin;
+          }
+        } else {
+          valInput -= pas;
+          if (valInput < vmin) {
+            valInput = vmax;
+          }
+        }
+        if(valInput == 0) valInput += ".0";
+        document.getElementById(id_champ).value = valInput + lib;
+      }
+      function AjustFloat(id_champ, sens, vmin, vmax, pas, lib) {
+        var valInput = document.getElementById(id_champ).value;
+        if (valInput == "undefined" || valInput == "NaN") {
+          valInput = vmin;
+        }
+        if (lib != '') {
+          valInput = (valInput.substring(0, valInput.indexOf(lib))) * 10;
+        } else {
+          valInput = valInput * 10;
+        }
+        pas = pas * 10;
+        vmin = vmin * 10;
+        vmax = vmax * 10;
+        if (sens == 'plus') {
+          valInput += pas;
+          if (valInput > vmax) {
+            valInput = vmin;
+          }
+        } else {
+          valInput -= pas;
+          if (valInput < vmin) {
+            valInput = vmax;
+          }
+        }
+        valInput = valInput / 10;
+        document.getElementById(id_champ).value = valInput.toFixed(1) + lib;
+      }
+      function mapfloat(x, in_min, in_max, out_min, out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+      }
+      function LOVSelection(NomLOV, MyOpt) {
+        var selectBox = document.getElementById(NomLOV);
+        if (NomLOV != '') {
+          for (var i=0; i<selectBox.options.length; i++) {
+            if (document.getElementById(NomLOV).options[i].value == MyOpt || document.getElementById(NomLOV).options[i].innerHTML == MyOpt) {
+              document.getElementById(NomLOV).options[i].selected = true;
+              document.getElementById(NomLOV).selectedIndex = i
+            }
+          }
+        }
+      }
+    </script>
+    <script type="text/javascript">
+      <!--// [CDATA[ 
+      var IsIE=!!document.all;
+      var calque;
+      var essai;
+      var timerint;
+      window.onload = function() {
+        calque = document.getElementById('overlay');
+        var calqueX = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        var calqueY = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        calque.style.width = Math.max(document.body.offsetWidth, calqueX) + 'px';
+        calque.style.height = Math.max(document.body.offsetHeight, calqueY) + 'px';
+        if(IsIE) {
+          calque.style.filter='alpha(opacity=0)';
+          calque.filters[0].opacity=0;
+        } else {
+          calque.style.opacity=0;
+        }
+      }
+      function creer_message(elt, texte) {
+        var i=0;
+        essai = elt.cloneNode(true);
+        essai.id = 'ajout';
+        if (elt.id == 'div_wait') {
+          texte = "<img src='/attente.gif' style='display:block; margin-left:auto; margin-right:auto;' alt='' /><br />" + texte;
+        }
+        essai.innerHTML = texte;
+        document.body.appendChild(essai);
+        if(IsIE) {
+          essai.style.filter='alpha(opacity=0)';
+          essai.filters[0].opacity=0;
+        } else {
+          essai.style.opacity=0;
+        }
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+        timerint = setInterval(function() {
+          if(i==100) {
+            clearInterval(timerint);
+            timerint = false;
+            essai.onclick = fin;
+          } else {
+            if(IsIE) {
+              calque.filters[0].opacity = i*0.75;
+              essai.filters[0].opacity = i;
+            } else {
+              calque.style.opacity=(i/100)*0.75;
+              essai.style.opacity=i/100;
+            }
+            i=Math.min(i+5, 100);
+          }
+        }, 1);
+      }
+      function fin() {
+        var i=100;
+        if(!timerint) {
+          timerint = setInterval(function() {
+            if(i==0) {
+              clearInterval(timerint);
+              calque.style.display = 'none';
+              document.body.removeChild(document.getElementById('ajout'));
+            } else {
+              if(IsIE) {
+                calque.filters[0].opacity = i*0.75;
+                essai.filters[0].opacity = i;
+              } else{
+                calque.style.opacity=(i/100)*0.75;
+                essai.style.opacity = i/100;
+              }
+              i = Math.max(i-5,0);
+            }
+          }, 1);
+        }
+      }
+      function onError(event) {
+        console.error("Une erreur " + event.target.status + " s'est produite au cours de la réception du document.");
+      }
+      // ]] -->
+    </script>
+  </head>
+  <body>
+    <div id="bg_clouds">
+      <div id="main">
+        <div style="height:15px"></div>
+        <div class="cont_top_global"></div>
+        <div id="content"> <!-- Content englobant -->
+          <!-- entête  -->
+          <div class="header_top"></div>
+          <!-- div id="main_title" -->
+          <div id="main-wrapper">
+            <center>
+              <table align="center" border="0">
+                <tr>
+                  <td align="left" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                  <td valign="middle" nowrap>
+                    <h1 id="bnom">Borne GEMI</h1>
+                  </td>
+                  <td align="right" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                </tr>
+              </table>
+              <table align="center" border="0">
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">IP/MAC:</font>
+                    <label id="ip" align="center" style="color:darkblue;font-weight:bold;">192.168.***.***</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                  </td>
+                </tr>
+              </table>
+            </center>
+          </div> <!-- Ferme main-wrapper -->
+          <div class="header_bot"></div>
+          <div style="height:15px"></div>
+          <!-- contenu  -->
+          <!-- Paramètres WiFi et températures -->
+          <div class="cont_top" align="center">
+            <table align="center" width="99%">
+              <tr>
+                <td style="width:50%;text-align:center;">
+                  <h2>Paramètres réseau WiFi</h2>
+                </td>
+                <td style="width:50%;text-align:center;">
+                  <h2>Borne GEMI</h2>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="cont" align="center"> <!-- contenu  -->
+            <table width="99%" border="0">
+              <tr>
+                <td align="center" valign="top">
+                  <table align="center" border="0">
+                    <tr>
+                      <td align="right">
+                        <font color="blue">SSID1 (réseau)</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="ssid1" value="MonReseauWifi" pattern=".{5,}" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">PSK1 (mot de passe)</font>
+                      </td>
+                      <td align="left" width="150px">
+                        <input type="password" id="psk1" value="MotDePasseWifi" pattern=".{5,}" required/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_psk1" checked />
+                            <label for="chk_psk1"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">SSID2 (réseau)</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="ssid2" value="MonReseauWifi" pattern=".{5,}" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">PSK2 (mot de passe)</font>
+                      </td>
+                      <td align="left" width="150px">
+                        <input type="password" id="psk2" value="MotDePasseWifi" pattern=".{5,}" required/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_psk2" checked />
+                            <label for="chk_psk2"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">SSID3 (réseau)</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="ssid3" value="MonReseauWifi" pattern=".{5,}" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">PSK3 (mot de passe)</font>
+                      </td>
+                      <td align="left" width="150px">
+                        <input type="password" id="psk3" value="MotDePasseWifi" pattern=".{5,}" required/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_psk3" checked />
+                            <label for="chk_psk3"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">SSID4 (réseau)</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="ssid4" value="MonReseauWifi" pattern=".{5,}" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">PSK4 (mot de passe)</font>
+                      </td>
+                      <td align="left" width="150px">
+                        <input type="password" id="psk4" value="MotDePasseWifi" pattern=".{5,}" required/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_psk4" checked />
+                            <label for="chk_psk4"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">URL Voice RSS</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" style="width:250px;" id="vrss" value="http://api.voicerss.org/?key=b1b971dd1c88484799e674f32ffd4e66&hl=fr-fr&c=MP3&f=44khz_16bit_mono&src=" placeholder="http://api.voicerss.org/?key=b1b971dd1c88484799e674f32ffd4e66&hl=fr-fr&c=MP3&f=44khz_16bit_mono&src=" title="URL compte Voice RSS TTS (site: http://api.voicerss.org)" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">UID NANO 33 BLE Sense</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" style="width:250px;" id="uid_nano" value="AD-6A-DF-9D-1D-4F-34-72" title="L'ID de la borne (indicatif non utilisé par les paramètres)" readonly/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Access Key NANO 33 BLE Sense</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" style="width:250px;" id="access_key" value="uFvtzsB/s20inH3sEUxAbNIBucyfhdHxcu7ARpL580euQKg5kMQzzA==" title="L'ID de la borne  (indicatif non utilisé par les paramètres)" readonly/>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="width:50%;" align="center" valign="top">
+                  <table align="center" border="0">
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Nom de la borne GEMI</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="name" value="Salon" onKeyUp="javascript:firstCap(this);" title="Le nom qui sera utilisé par la borne ('GEMI_' est ajouté automatiquement)."/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">OffSet de température</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="tajst" value="0.0 °C" style="text-align:center;width:60px;" title="Cette valeur sert à ajuster la température relevée par le capteur de température." readonly /><input type="button" onclick="AjustFloat('tajst','plus',-30.0,30.0,0.5,' °C');" value="+"/><input type="button"onclick="AjustFloat('tajst','moins',-30.0,30.0,0.5,' °C');" value="-"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Utilisateur WEB</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="webuser" value="JLN" title="Pour l'accès à cette page WEB" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Mot de passe WEB</font>
+                      </td>
+                      <td align="left" width="150px" nowrap>
+                        <input type="password" id="webpass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Pour l'accès à cette page WEB" required/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_web" checked />
+                            <label for="chk_web"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">IP serveur NTP</font>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <input type="text" id="ipntp" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipntp','ip');" title="Respecter le format : 000.000.000.000" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" width="85" nowrap>
+                        <font color="blue">Port UDP/NTP</font>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <input type="text" size="5" maxlength="5" id="timeport" onKeyPress="return scanTouche(event,'num');" title="Port du serveur UDP d'écoute pour la mise à l'heure (ex: 2390, envoi=123)." style="text-align:right;width:60px;" value="2390" placeholder="2390"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Time Zone Europe</font>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <select id="timezone" style="text-align:center;font-family:courier;width:150px;" title="Zone heure locale (France = +1H en hiver, +2H en été)">
+                          <option value="0"> Ouest&nbsp;&nbsp;&nbsp;&nbsp;(+0) </option>
+                          <option value="1"> Centrale&nbsp;(+1) </option>
+                          <option value="2"> Est&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+2) </option>
+                          <option value="3"> Moscou&nbsp;&nbsp;&nbsp;(+3) </option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Heure été / hiver</font>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <section title="Activer le changement automatique de l'heure d'été/hiver?">
+                          <!-- .slideThree -->
+                          <div class="slideThree">  
+                            <input type="checkbox" value="None" id="hetehiver"/>
+                            <label for="hetehiver"></label>
+                          </div>
+                          <!-- end .slideThree -->
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <label id="letehiver"><font color="blue">Garder heure d'été</font></label>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <section title="Garder l'heure d'été si pas de changement été/hiver?" id="cacher">
+                          <!-- .slideThree -->
+                          <div class="slideThree">  
+                            <input type="checkbox" value="None" id="etehiver"/>
+                            <label for="etehiver"></label>
+                          </div>
+                          <!-- end .slideThree -->
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <label id="ltestled"><font color="blue">Test LEDs au démarrage</font></label>
+                      </td>
+                      <td align="left" colspan="2" nowrap>
+                        <section title="Test les LEDs au démarrage de la borne." id="tled">
+                          <!-- .slideThree -->
+                          <div class="slideThree">  
+                            <input type="checkbox" value="None" id="testled"/>
+                            <label for="testled"></label>
+                          </div>
+                          <!-- end .slideThree -->
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" colspan="3" nowrap>
+                        <label><font color="blue">Test LED</font></label>&nbsp;
+                        <input type="button" style="width:50px;" value="Tester" onClick="javascript:TestLEDs(-1);" title="Test toutes les LEDs"/>
+                        <input type="button" value="0" onClick="javascript:TestLEDs(0);" title="M/A de la LED volume."/>
+                        <input type="button" value="1" onClick="javascript:TestLEDs(1);" title="M/A de la LED volume."/>
+                        <input type="button" value="2" onClick="javascript:TestLEDs(2);" title="M/A de la LED volume."/>
+                        <input type="button" value="3" onClick="javascript:TestLEDs(3);" title="M/A de la LED volume."/>
+                        <input type="button" value="4" onClick="javascript:TestLEDs(4);" title="M/A de la LED volume."/>
+                        <input type="button" value="5" onClick="javascript:TestLEDs(5);" title="M/A de la LED volume."/>
+                        <input type="button" value="6" onClick="javascript:TestLEDs(6);" title="M/A de la LED volume."/>
+                        <input type="button" value="7" onClick="javascript:TestLEDs(7);" title="M/A de la LED volume."/>
+                        <input type="button" value="8" onClick="javascript:TestLEDs(8);" title="M/A de la LED Micro (Rouge)."/>
+                        <input type="button" value="9" onClick="javascript:TestLEDs(9);" title="M/A de la LED Ecoute (Bleu)."/>
+                        <input type="button" value="10" onClick="javascript:TestLEDs(10);" title="M/A de la LED WiFi(Vert)."/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" colspan="3" class="toutpetit" id="reponse" nowrap>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div> <!-- Ferme cont -->
+          <div class="cont_bot"></div>
+          <div style="height:15px"></div>
+          <!-- --------- -->
+          <div class="cont_top" align="center">
+            <table align="center" width="99%">
+              <tr>
+                <td style="width:50%;text-align:center;">
+                  <h2>Test de commande</h2>
+                </td>
+                <td style="width:50%;text-align:center;">
+                  <h2>Box, Serveur FTP et OTA</h2>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="cont" align="center"> <!-- contenu  -->
+            <table width="99%" style="color:blue;" border="0">
+              <tr>
+                <td valign="top" align="center">
+                  <table style="margin:auto;" border="0">
+                    <tr>
+                      <td colspan="2" align="center">
+                        <div id="borderimg">
+                          <table style="table-layout:auto;">
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Ordre</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="ordre">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="arrêt"> arrêt </option>
+                                  <option value="arrête"> arrête </option>
+                                  <option value="ajoute"> ajoute </option>
+                                  <option value="allume"> allume </option>
+                                  <option value="annule"> annule </option>
+                                  <option value="augmente"> augmente </option>
+                                  <option value="baisse"> baisse </option>
+                                  <option value="coupe"> coupe </option>
+                                  <option value="diminue"> diminue </option>
+                                  <option value="redémarre"> redémarre </option>
+                                  <option value="en route"> en route </option>
+                                  <option value="éteint"> éteint </option>
+                                  <option value="ferme"> ferme </option>
+                                  <option value="marche"> marche </option>
+                                  <option value="mets"> mets </option>
+                                  <option value="mettre"> mettre </option>
+                                  <option value="monte"> monte </option>
+                                  <option value="ouvre"> ouvre </option>
+                                  <option value="remets"> remets </option>
+                                  <option value="souhaite"> souhaite </option>
+                                  <option value="supprime"> supprime </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Objet</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="objet">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="adresse"> adresse IP </option>
+                                  <option value="alarme"> alarme </option>
+                                  <option value="année"> année </option>
+                                  <option value="anniversaire"> anniversaire </option>
+                                  <option value="boite"> boite </option>
+                                  <option value="boite aux lettres"> boite aux lettres </option>
+                                  <option value="bonjour"> bonjour </option>
+                                  <option value="cafetière"> cafetière </option>
+                                  <option value="chauffage"> chauffage </option>
+                                  <option value="courrier"> courrier </option>
+                                  <option value="clim"> clim </option>
+                                  <option value="climatiseur"> climatiseur </option>
+                                  <option value="climatisation"> climatisation </option>
+                                  <option value="couleur"> couleur </option>
+                                  <option value="date"> date </option>
+                                  <option value="fenêtre"> fenêtre </option>
+                                  <option value="frigidaire"> frigidaire </option>
+                                  <option value="frigo"> frigo </option>
+                                  <option value="four"> four </option>
+                                  <option value="GÉMI"> GEMI </option>
+                                  <option value="heure"> heure </option>
+                                  <option value="jauge"> jauge </option>
+                                  <option value="jauge à fioul"> jauge à fioul </option>
+                                  <option value="jour"> jour </option>
+                                  <option value="lave-vaisselle"> lave-vaisselle </option>
+                                  <option value="lumière"> lumière </option>
+                                  <option value="machine à laver"> machine à laver </option>
+                                  <option value="meilleur"> meilleur </option>
+                                  <option value="météo"> météo </option>
+                                  <option value="micro"> micro </option>
+                                  <option value="mois"> mois </option>
+                                  <option value="niveau"> niveau </option>
+                                  <option value="niveau fioul"> niveau fioul </option>
+                                  <option value="pause"> pause </option>
+                                  <option value="portail"> portail </option>
+                                  <option value="porte"> porte </option>
+                                  <option value="portillon"> portillon </option>
+                                  <option value="radio"> radio </option>
+                                  <option value="semaine"> semaine </option>
+                                  <option value="serveur"> serveur </option>
+                                  <option value="son"> son </option>
+                                  <option value="température"> température </option>
+                                  <option value="temps"> temps </option>
+                                  <option value="télé"> télé </option>
+                                  <option value="télévision"> télévision </option>
+                                  <option value="tv"> tv </option>
+                                  <option value="ventilateur"> ventilateur </option>
+                                  <option value="ventilo"> ventilo </option>
+                                  <option value="volet"> volet </option>
+                                  <option value="volets"> volets </option>
+                                  <option value="volume"> volume </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Localisation</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="local">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="cabinet de toilette"> Cabinet de toilette </option>
+                                  <option value="chambre"> Chambre </option>
+                                  <option value="chambre sylvie"> Chambre Sylvie </option>
+                                  <option value="chambre jean-luc"> Chambre Jean-Luc </option>
+                                  <option value="chambre à coucher"> Chambre à coucher </option>
+                                  <option value="couloir"> Couloir </option>
+                                  <option value="cuisine"> Cuisine </option>
+                                  <option value="dressing"> Dressing </option>
+                                  <option value="escalier"> Escalier </option>
+                                  <option value="garage"> Garage </option>
+                                  <option value="garde manger"> Garde manger </option>
+                                  <option value="penderie"> Penderie </option>
+                                  <option value="placard"> Placard </option>
+                                  <option value="salle de bains"> Salle de bains </option>
+                                  <option value="salle à manger"> Salle à manger </option>
+                                  <option value="salle de séjour"> Salle de séjour </option>
+                                  <option value="salon"> Salon </option>
+                                  <option value="séjour"> Séjour </option>
+                                  <option value="sous-sol"> Sous-sol </option>
+                                  <option value="toilettes"> Toilettes </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Couleur</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="couleur">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="blanc"> Blanc </option>
+                                  <option value="bleu"> Bleu </option>
+                                  <option value="jaune"> Jaune </option>
+                                  <option value="orange"> Orange </option>
+                                  <option value="rose"> Rose </option>
+                                  <option value="rouge"> Rouge </option>
+                                  <option value="vert"> Vert </option>
+                                  <option value="violet"> Violet </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Temps</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="temps">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="seconde"> Seconde </option>
+                                  <option value="minute"> Minute </option>
+                                  <option value="heure"> Heure </option>
+                                  <option value="jour"> Jour </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Prénom</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="prenom">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="Benoit"> Benoit </option>
+                                  <option value="Bruno"> Bruno </option>
+                                  <option value="Cédric"> Cédric </option>
+                                  <option value="Erick"> Erick </option>
+                                  <option value="Fabienne"> Fabienne </option>
+                                  <option value="Gabriel"> Gabriel </option>
+                                  <option value="Guillaume"> Guillaume </option>
+                                  <option value="Inès"> Iness </option>
+                                  <option value="Jean-Luc"> Jean-Luc </option>
+                                  <option value="Jenifer"> Jenifer </option>
+                                  <option value="Karim"> Karim </option>
+                                  <option value="Karine"> Karin </option>
+                                  <option value="Linda"> Linda </option>
+                                  <option value="Michel"> Michel </option>
+                                  <option value="Patricia"> Patricia </option>
+                                  <option value="Philippe"> Philippe </option>
+                                  <option value="Sylvie"> Sylvie </option>
+                                  <option value="Thomas"> Thomas </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Préposition</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <select id="prepos">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="à"> à </option>
+                                  <option value="dans"> dans </option>
+                                  <option value="pour"> pour </option>
+                                  <option value="sur"> sur </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Station</font>
+                              </td>
+                              <td align="left" id="lstradios" nowrap>
+                                <select id="station">
+                                  <option value="aucun"> Aucun </option>
+                                  <option value="Chérie FM"> Chérie FM </option>
+                                  <option value="Europe Numéro Un"> Europe N° 1 </option>
+                                  <option value="Fip"> FIP </option>
+                                  <option value="France-Culture"> France-Culture </option>
+                                  <option value="France Info"> France Info </option>
+                                  <option value="France Musique"> France Musique </option>
+                                  <option value="France Inter"> France Inter </option>
+                                  <option value="Fréquence Jazz"> Fréquence Jazz </option>
+                                  <option value="Le Mouve"> Le Mouve </option>
+                                  <option value="Radio Classique"> Radio Classique </option>
+                                  <option value="Radio Crooner"> Radio Crooner </option>
+                                  <option value="Radio Grenouille"> Radio Grenouille </option>
+                                  <option value="RFI"> RFI </option>
+                                  <option value="RFM"> RFM </option>
+                                  <option value="RTBF"> RTBF </option>
+                                  <option value="RTL"> RTL </option>
+                                  <option value="RTL deux"> RTL2 </option>
+                                  <option value="RMC"> RMC </option>
+                                  <option value="Rires et Chansons"> Rires et Chansons </option>
+                                  <option value="Skyrock"> Skyrock </option>
+                                  <option value="Sud Radio"> Sud Radio </option>
+                                  <option value="Suisse première"> Suisse première </option>
+                                </select>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td align="right" nowrap>
+                                <font color="blue">Valeur</font>
+                              </td>
+                              <td align="left" nowrap>
+                                <input type="text" id="valeur" />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td colspan="2" align="center">
+                                <button onclick="javascript:Tester();"><span class="cde" style="position:relative;top:+10px;"><em>Tester</em></span></button>
+                              </td>
+                            </tr>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td valign="top" align="center">
+                  <table style="margin:auto;" width="300px" border="0">
+                    <tr>
+                      <td align="right">
+                        <font color="blue">Utilisateur FTP</font>
+                      </td>
+                      <td align="left" colspan='2'>
+                        <input type="text" id="ftpuser" value="JLN"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">Mot de passe FTP</font>
+                      </td>
+                      <td align="left">
+                        <input type="password" id="ftppass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_ftp" checked />
+                            <label for="chk_ftp"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">Mot de passe OTA</font>
+                      </td>
+                      <td align="left">
+                        <input type="password" id="otapass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
+                      </td>
+                      <td align="left">
+                        <section title="Masquer/Démasquer">
+                          <div class="roundedOne">
+                            <input type="checkbox" value="None" id="chk_ota" checked />
+                            <label for="chk_ota"></label>
+                          </div>
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">IP (adresse ip fixe)</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="text" id="ipfix" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipfix','ip');" title="Respecter le format :000.000.000.000" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">Adresse IP GW</font>
+                      </td>
+                      <td align="left" colspan='2'>
+                        <input type="text" id="ipgw" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipgw','ip');" title="Respecter le format :000.000.000.000" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">Adresse IP DNS</font>
+                      </td>
+                      <td align="left" colspan='2'>
+                        <input type="text" id="ipdns" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipdns','ip');" title="Respecter le format :000.000.000.000" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Masque réseau (mask)</font>
+                      </td>
+                      <td align="left" colspan='2' nowrap>
+                        <input type="text" id="subnet" maxlength="15" value="255.255.255.000" placeholder="255.255.255.000" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('subnet','ip');" title="Respecter le format : 000.000.000.000" required/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        <font color="blue">HandShake Timeout</font>
+                      </td>
+                      <td align="left" colspan='2'>
+                        <input type="text" id="HSTimeout" value="5000" placeholder="5000" onKeyPress="return scanTouche(event,'num');" title="NOTA: En millisecondes (1000ms = 1s)" style="text-align:right;width:60px;"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" align="center">
+                        <h2>Fichier LOG</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue" title="Des LOG seront écrit dans un fichier à des fin de débogage.">Ecrire des LOGs</font>
+                      </td>
+                      <td align="left" colspan='2' nowrap>
+                        <section title="Ecrire les actions dans un fichier LOG?">
+                          <!-- .slideThree -->
+                          <div class="slideThree">  
+                            <input type="checkbox" value="None" id="log"/>
+                            <label for="log"></label>
+                          </div>
+                          <!-- end .slideThree -->
+                        </section>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" colspan="3" height="80px" valign="bottom">
+                        <button onclick="javascript:Sauver();"><span class="cde" style="position:relative; top:-10px;"><em>Tout enregistrer</em></span></button>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div> <!-- Ferme cont -->
+          <div class="cont_bot"></div>
+          <div style="height:15px"></div>
+          <!-- --------- -->
+          <div style="height:15px"></div>
+        </div> <!-- Ferme content englobant -->
+        <div class="cont_bot_global">
+          <button onclick="document.location.href='/sons.htm';"><span style="position:relative; top:-10px;"><em>Sons</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/radio.htm';"><span style="position:relative; top:-10px;"><em>Radios</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/borne.htm';"><span style="position:relative; top:-10px;"><em>Bornes</em></span></button>&nbsp;&nbsp;
+          <button onclick="javascript:Micro();"><span style="position:relative; top:-10px;"><em>M/A Micro</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/config','_blank');"><span style="position:relative; top:-10px;"><em>Voir config</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/configlog','_blank');"><span style="position:relative; top:-10px;"><em>Voir config LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/defaut.txt','_blank');"><span style="position:relative; top:-10px;"><em>Voir Vol./Stat.</em></span></button>&nbsp;&nbsp;
+          <!-- button onclick="window.open('/radionom','_blank');"><span style="position:relative; top:-10px;"><em>Noms radios</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/radiolien','_blank');"><span style="position:relative; top:-10px;"><em>Liens radios</em></span></button>&nbsp;&nbsp;-->
+          <button onclick="window.open('/logfile','_blank');"><span style="position:relative; top:-10px;"><em>Voir les LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/firmware','_blank');"><span style="position:relative; top:-10px;"><em>Firmware</em></span></button>&nbsp;&nbsp;
+          <br/>
+        </div> <!-- Ferme cont_bot_global -->
+      </div> <!-- Ferme main -->
+    </div> <!-- Ferme bg_clouds -->
+    <div id="div_wait" class="wait" style="display:none;"></div>
+    <div id="div_success" class="success" style="display:none;"></div>
+    <div id="div_info" class="info" style="display:none;"></div>
+    <div id="overlay"></div>
+    <script type="text/javascript">
+      // On recueille les paramètres actuels, pour une seule fois au démarrage.
+      timerunefois = window.setInterval(RecoisPremiereInfos, 2000);
+      // Pour voir les mots de passe
+      $(document).ready(function() {
+        var chk_web = $("#chk_web");
+        var chk_ftp = $("#chk_ftp");
+        var chk_ota = $("#chk_ota");
+        var chk_psk1 = $("#chk_psk1");
+        var chk_psk2 = $("#chk_psk2");
+        var chk_psk3 = $("#chk_psk3");
+        var chk_psk4 = $("#chk_psk4");
+        var heh = $("#hetehiver");
+        var obj1 = document.getElementById("letehiver");
+        var obj2 = document.getElementById("cacher");
+        var psk1 = $("#psk1");
+        var psk2 = $("#psk2");
+        var psk3 = $("#psk3");
+        var psk4 = $("#psk4");
+        var ftppass = $("#ftppass");
+        var otapass = $("#otapass");
+        var webpass = $("#webpass");
+        heh.click(function() {
+          if (heh.prop("checked")) {
+            obj1.style.display = "none";
+            obj2.style.display = "none";
+          } else {
+            obj1.style.display = "block";
+            obj2.style.display = "block";
+          }
+        });
+        chk_psk1.click(function() {
+          if(chk_psk1.prop("checked")) {
+            psk1.attr("type", "password");
+          } else {
+            psk1.attr("type", "text");
+          }
+        });
+        chk_psk2.click(function() {
+          if(chk_psk2.prop("checked")) {
+            psk2.attr("type", "password");
+          } else {
+            psk2.attr("type", "text");
+          }
+        });
+        chk_psk3.click(function() {
+          if(chk_psk3.prop("checked")) {
+            psk3.attr("type", "password");
+          } else {
+            psk3.attr("type", "text");
+          }
+        });
+        chk_psk4.click(function() {
+          if(chk_psk4.prop("checked")) {
+            psk4.attr("type", "password");
+          } else {
+            psk4.attr("type", "text");
+          }
+        });
+        chk_web.click(function() {
+          if(chk_web.prop("checked")) {
+            webpass.attr("type", "password");
+          } else {
+            webpass.attr("type", "text");
+          }
+        });
+        chk_ftp.click(function() {
+          if(chk_ftp.prop("checked")) {
+            ftppass.attr("type", "password");
+          } else {
+            ftppass.attr("type", "text");
+          }
+        });
+        chk_ota.click(function() {
+          if(chk_ota.prop("checked")) {
+            otapass.attr("type", "password");
+          } else {
+            otapass.attr("type", "text");
+          }
+        });
+      });
+    </script>
+    <br/><br/>
+  </body>
+</html>

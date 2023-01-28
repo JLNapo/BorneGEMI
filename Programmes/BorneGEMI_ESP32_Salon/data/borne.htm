@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+    <meta http-equiv="Content-language" content="fr" />
+    <meta http-equiv="Pragma" content="no-cache" /> 
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta http-equiv="Content-Script-Type" content="text/javascript" />
+    <meta name="Description" content="Borne GEMI" />
+    <meta name="Author" content="Jean-Luc NAPOLITANO" />
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link href="/style.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <title>Borne GEMI</title>
+
+    <script type="text/javascript">
+      var timerunefois;
+      var NbreBornes = 0;
+      var Borne = "";
+      var oldnum = 0;
+      var gemi = "";
+      var oldnom = "";
+      var oldlien = "";
+      function RecoisPremiereInfos() {
+        var request = new XMLHttpRequest();
+        request.overrideMimeType('text/plain');
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText;
+                txt = texte.split("*");
+                NbreBornes = txt[0];
+                Bornes = txt[1];
+                //Bornes = encodeURIComponent(txt[1]);
+                document.getElementById("liste").innerHTML = Bornes;
+                window.clearInterval(timerunefois);
+								document.getElementById("ip").innerHTML = txt[2];
+                document.getElementById("ssid").innerHTML = txt[3]; 
+              }
+            }
+          }
+        }
+        request.open("GET", "/ajaxlstborne", true);
+        request.send();
+      }
+      var req_cde = new XMLHttpRequest();
+      var req;
+      function SauveBornesGEMI() {
+        req = "/ajaxsauveborne?nb=" + NbreBornes;
+        for (var i=1; i<=NbreBornes; i++) {
+          req += "&nom" + i + "=" + document.getElementById("nom"+i).innerHTML;
+          req += "&lien" + i + "=" + encodeURIComponent(document.getElementById("lien"+i).innerHTML);
+        }
+        EnvoyerRequete();
+        creer_message(div_wait,"Une commande d'enregistrement a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre quelques secondes)");
+      }
+      function Monter(num) {
+        if (num > 1) {
+          var nom1 = document.getElementById("nom"+num).innerHTML;
+          var lien1 = document.getElementById("lien"+num).innerHTML;
+          var nom2 = document.getElementById("nom"+(num-1)).innerHTML;
+          var lien2 = document.getElementById("lien"+(num-1)).innerHTML;
+          document.getElementById("nom"+num).innerHTML = nom2;
+          document.getElementById("lien"+num).innerHTML = lien2;
+          document.getElementById("nom"+(num-1)).innerHTML = nom1;
+          document.getElementById("lien"+(num-1)).innerHTML = lien1;
+        } else {
+          alert("Mouvement impossible, on est déjà en haut de la liste!");
+        }
+      }
+      function Descendre(num) {
+        if (num < NbreBornes) {
+          var nom1 = document.getElementById("nom"+num).innerHTML;
+          var lien1 = document.getElementById("lien"+num).innerHTML;
+          var nom2 = document.getElementById("nom"+(num+1)).innerHTML;
+          var lien2 = document.getElementById("lien"+(num+1)).innerHTML;
+          document.getElementById("nom"+num).innerHTML = nom2;
+          document.getElementById("lien"+num).innerHTML = lien2;
+          document.getElementById("nom"+(num+1)).innerHTML = nom1;
+          document.getElementById("lien"+(num+1)).innerHTML = lien1;
+        } else {
+          alert("Mouvement impossible, on est déjà au bas de la liste!");
+        }
+      }
+      function Editer(num) {
+        oldnum = num;
+        oldnom = document.getElementById("nom"+num).innerHTML;
+        oldlien = document.getElementById("lien"+num).innerHTML;
+        essai = div_edit.cloneNode(true);
+        essai.id = 'ajout';
+        essai.style="left:1000px;width:450px;top:450px;border-radius:5px;border:1px solid;padding:15px 10px 15px 50px;background-repeat:no-repeat;background-position:10px center;background-color:#b0ffff;";
+        essai.querySelector("#mod_id").innerHTML = num;
+        essai.querySelector("#mod_nom").value = oldnom;
+        essai.querySelector("#mod_ip").value = oldlien;
+        essai.querySelector("#btnok").setAttribute("onclick","javascript:EditerValider();");
+        essai.querySelector("#btncancel").setAttribute("onclick","javascript:EditerAnnuler();");
+        document.body.appendChild(essai);
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+      }
+      function EditerValider() {
+        var num = essai.querySelector("#mod_id").innerHTML;
+        var nom = essai.querySelector("#mod_nom").value;
+        var lien = essai.querySelector("#mod_ip").value;
+        if (nom == "" || lien == "") {
+          alert("Vous devez remplir tous les champs avant de valider.");
+          return;
+        }
+        if (nom != oldnom || lien != oldlien) {
+          if (IP_Valide(lien)) {
+            document.getElementById("nom"+num).innerHTML = nom;
+            document.getElementById("lien"+num).innerHTML = lien;
+            EditerAnnuler();
+          } else {
+            alert("L'adresse IP de la borne gemi n'est pas correcte!\nElle doit obligatoirement avoir une structure standard IPV4\nex: 192.168.***.***.");
+          }
+        }
+      }
+      function EditerAnnuler() {
+        calque.style.display = 'none';
+        document.body.removeChild(document.getElementById('ajout'));
+      }
+      function Supprimer(num) {
+        oldnum = num;
+        oldnom = document.getElementById("nom"+num).innerHTML;
+        oldlien = document.getElementById("lien"+num).innerHTML;
+        if (window.confirm("Confirmez-vous la suppression de: \n" + oldnom + " - " + oldlien)) {
+          for (var i=num; i<NbreBornes; i++) {
+            document.getElementById("nom"+i).innerHTML = document.getElementById("nom"+(i+1)).innerHTML;
+            document.getElementById("lien"+i).innerHTML = document.getElementById("lien"+(i+1)).innerHTML;
+          }
+          document.getElementById('lstgemis').deleteRow(-1);
+          NbreBornes--;
+          document.getElementById('nbr').innerHTML = NbreBornes + " Bornes";
+        }
+      }
+      function AjouterBGemi() {
+        num = NbreBornes;
+        num++;
+        oldnom = "";
+        oldlien = "";
+        essai = div_edit.cloneNode(true);
+        essai.id = 'ajout';
+        essai.style="left:1000px;width:450px;top:450px;border-radius:5px;border:1px solid;padding:15px 10px 15px 50px;background-repeat:no-repeat;background-position:10px center;background-color:#b0ffff;";
+        essai.querySelector("#mod_id").innerHTML = num;
+        essai.querySelector("#btnok").setAttribute("onclick","javascript:AjouterValider();");
+        essai.querySelector("#btncancel").setAttribute("onclick","javascript:EditerAnnuler();");
+        document.body.appendChild(essai);
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+      }
+      function AjouterValider() {
+        var nom = essai.querySelector("#mod_nom").value;
+        var lien = essai.querySelector("#mod_ip").value;
+        if (nom == "" || lien == "") {
+          alert("Vous devez remplir tous les champs avant de valider.");
+          return;
+        }
+        if (IP_Valide(lien) != true) {
+          alert("L'adresse IP de la borne gemi n'est pas correcte!\nElle doit obligatoirement avoir une structure standard IPV4\nex: 192.168.***.***.");
+          return;
+        }
+        num = essai.querySelector("#mod_id").innerHTML
+        var refTable = document.getElementById("lstgemis");
+        var nouvelleLigne = refTable.insertRow(num-1);
+        var nouvelleCellule = nouvelleLigne.insertCell(0);
+        nouvelleCellule.setAttribute("id","num"+num);
+        var nouveauTexte = document.createTextNode(num);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(1);
+        nouvelleCellule.setAttribute("id","nom"+num);
+        nouveauTexte = document.createTextNode(nom);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(2);
+        nouvelleCellule.setAttribute("id","lien"+num);
+        nouveauTexte = document.createTextNode(lien);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(3);
+        nouvelleCellule.setAttribute("id","md"+num);
+        nouveauTexte = "<img src=\"/haut.png\" onclick=\"javascript:Monter(" + num + ");\" title=\"Monter\"/>&nbsp;<img src=\"/bas_gris.png\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        nouvelleCellule = nouvelleLigne.insertCell(4);
+        nouveauTexte = "<img src=\"/edit.png\" onclick=\"javascript:Editer(" + num + ");\" title=\"Editer\"/>&nbsp;<img src=\"/corbeille.png\" onclick=\"javascript:Supprimer(" + num + ");\" title=\"Supprimer définitivement!\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        refTable.appendChild(nouvelleLigne);
+        document.getElementById("md"+NbreBornes).innerHTML = "<img src=\"/haut.png\" onclick=\"javascript:Monter(" + NbreBornes + ");\" title=\"Monter\"/>&nbsp;<img src=\"/bas.png\" onclick=\"javascript:Descendre(" + NbreBornes + ");\" title=\"Descendre\"/>";
+        NbreBornes++;
+        document.getElementById('nbr').innerHTML = NbreBornes + " Bornes";
+        EditerAnnuler();
+      }
+      function IP_Valide(IPTest) {
+        var v = eval("/\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g.exec(IPTest) == null");
+        if (v) {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      function Micro() {
+        req = "/micro";
+        EnvoyerRequete();
+      }
+      function EnvoyerRequete() {
+        req_cde.onerror = onError;
+        req_cde.onreadystatechange = function() {
+          //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+          if (req_cde.readyState == 4) {
+            //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+            if (req_cde.status == 200) {
+              if (req_cde.responseText != null) {
+                //window.clearInterval(timercde);
+                alert(req_cde.responseText.replace('�','é'));
+                fin();
+                //window.location.reload();
+                return;
+              }
+            } else {
+              if (req_cde.responseText != null) {
+                fin();
+                //clearInterval(timercde);
+                alert(req_cde.responseText.replace('�','é'));
+              }
+            }
+          }
+        }
+        req_cde.open("GET", req, true);
+        req_cde.send();
+      }
+    </script>
+    <script type="text/javascript">
+      <!--// [CDATA[ 
+      var IsIE=!!document.all;
+      var calque;
+      var essai;
+      var timerint;
+      window.onload = function() {
+        calque = document.getElementById('overlay');
+        var calqueX = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        var calqueY = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        calque.style.width = Math.max(document.body.offsetWidth, calqueX) + 'px';
+        calque.style.height = Math.max(document.body.offsetHeight, calqueY) + 'px';
+        if(IsIE) {
+          calque.style.filter='alpha(opacity=0)';
+          calque.filters[0].opacity=0;
+        } else {
+          calque.style.opacity=0;
+        }
+      }
+      function creer_message(elt, texte) {
+        var i=0;
+        essai = elt.cloneNode(true);
+        essai.id = 'ajout';
+        if (elt.id == 'div_wait') {
+          texte = "<img src='/attente.gif' style='display:block; margin-left:auto; margin-right:auto;' alt='' /><br />" + texte;
+        }
+        essai.innerHTML = texte;
+        document.body.appendChild(essai);
+        if(IsIE) {
+          essai.style.filter='alpha(opacity=0)';
+          essai.filters[0].opacity=0;
+        } else {
+          essai.style.opacity=0;
+        }
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+        timerint = setInterval(function() {
+          if(i==100) {
+            clearInterval(timerint);
+            timerint = false;
+            essai.onclick = fin;
+          } else {
+            if(IsIE) {
+              calque.filters[0].opacity = i*0.75;
+              essai.filters[0].opacity = i;
+            } else {
+              calque.style.opacity=(i/100)*0.75;
+              essai.style.opacity=i/100;
+            }
+            i=Math.min(i+5, 100);
+          }
+        }, 1);
+      }
+      function fin() {
+        var i=100;
+        if(!timerint) {
+          timerint = setInterval(function() {
+            if(i==0) {
+              clearInterval(timerint);
+              calque.style.display = 'none';
+              document.body.removeChild(document.getElementById('ajout'));
+            } else {
+              if(IsIE) {
+                calque.filters[0].opacity = i*0.75;
+                essai.filters[0].opacity = i;
+              } else{
+                calque.style.opacity=(i/100)*0.75;
+                essai.style.opacity = i/100;
+              }
+              i = Math.max(i-5,0);
+            }
+          }, 1);
+        }
+      }
+      function onError(event) {
+        console.error("Une erreur " + event.target.status + " s'est produite au cours de la réception du document.");
+      }
+      // ]] -->
+    </script>
+  </head>
+  <body>
+    <div id="bg_clouds">
+      <div id="main">
+        <div style="height:15px"></div>
+        <div class="cont_top_global"></div>
+        <div id="content"> <!-- Content englobant -->
+          <!-- entête  -->
+          <div class="header_top"></div>
+          <!-- div id="main_title" -->
+          <div id="main-wrapper">
+            <center>
+              <table align="center" border="0">
+                <tr>
+                  <td align="left" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                  <td valign="middle" nowrap>
+                    <h1 id="bnom">Borne GEMI</h1>
+                  </td>
+                  <td align="right" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                </tr>
+              </table>
+              <table align="center" border="0">
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">IP/MAC:</font>
+                    <label id="ip" align="center" style="color:darkblue;font-weight:bold;">192.168.***.***</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                  </td>
+                </tr>
+              </table>
+            </center>
+          </div> <!-- Ferme main-wrapper -->
+          <div class="header_bot"></div>
+          <div style="height:15px"></div>
+          <!-- contenu  -->
+          <!-- Paramètres WiFi et températures -->
+          <div class="cont_top" align="center">
+            <table align="center" width="99%">
+              <tr>
+                <td style="width:99%;text-align:center;">
+                  <h2>Liste des Bornes</h2>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="cont" align="center"> <!-- contenu  -->
+            <table width="99%" border="0">
+              <tr>
+                <td id="liste" align="center" valign="top">
+                </td>
+              </tr>
+              <tr>
+                <td align="center" nowrap>
+                  <br/><button onclick="javascript:SauveBornesGEMI();"><span style="position:relative; top:-10px;"><em>Enregistrer</em></span></button>&nbsp;
+                  <button onclick="javascript:AjouterBGemi();"><span style="position:relative; top:-10px;"><em>Ajouter une Borne</em></span></button>
+                </td>
+              </tr>
+            </table>
+          </div> <!-- Ferme cont -->
+          <div class="cont_bot"></div>
+          <div style="height:15px"></div>
+          <!-- --------- -->
+          <div style="height:15px"></div>
+        </div> <!-- Ferme content englobant -->
+        <div class="cont_bot_global">
+          <button onclick="document.location.href='/index.htm';"><span style="position:relative; top:-10px;"><em>Accueil</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/sons.htm';"><span style="position:relative; top:-10px;"><em>Sons</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/radio.htm';"><span style="position:relative; top:-10px;"><em>Radios</em></span></button>&nbsp;&nbsp;
+          <button onclick="javascript:Micro();"><span style="position:relative; top:-10px;"><em>M/A Micro</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/config','_blank');"><span style="position:relative; top:-10px;"><em>Voir config</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/configlog','_blank');"><span style="position:relative; top:-10px;"><em>Voir config LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/defaut.txt','_blank');"><span style="position:relative; top:-10px;"><em>Voir Vol./Stat.</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/logfile','_blank');"><span style="position:relative; top:-10px;"><em>Voir les LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/firmware','_blank');"><span style="position:relative; top:-10px;"><em>Firmware</em></span></button>&nbsp;&nbsp;
+          <br/>
+        </div> <!-- Ferme cont_bot_global -->
+      </div> <!-- Ferme main -->
+    </div> <!-- Ferme bg_clouds -->
+    <div id="div_wait" class="wait" style="display:none;"></div>
+    <div id="div_success" class="success" style="display:none;"></div>
+    <div id="div_info" class="info" style="display:none;"></div>
+    <div id="div_edit" style="display:none;">
+      <table align='center' id='modif'>
+        <tr><th>Numéro</th><th>Nom</th><th>Adresse IP</th><th></th></tr>
+        <tr>
+          <td id="mod_id" name="mod_id">0</td>
+          <td><input type="text" id="mod_nom" required/></td>
+          <td><input type="text" style="width:150px;" class="form-input" id="mod_ip" name="mod_ip" placeholder="xxx.xxx.xxx.xxx" required/></td>
+          <td style="display:none;" id="mod_web"></td>
+        </tr>
+        <tr>
+          <td colspan='2' align='center'><button id="btnok" onclick=""><span style="position:relative;"><em>Enregistrer</em></span></button></td>
+          <td colspan='2' align='center'><button id="btncancel" onclick=""><span style="position:relative;"><em>Annuler</em></span></button></td>
+        </tr>
+      </table>
+    </div>
+    <div id="overlay"></div>
+    <script type="text/javascript">
+      // On recueille les paramètres actuels, pour une seule fois au démarrage.
+      timerunefois = window.setInterval(RecoisPremiereInfos, 2000);
+    </script>
+    <br/><br/>
+  </body>
+</html>

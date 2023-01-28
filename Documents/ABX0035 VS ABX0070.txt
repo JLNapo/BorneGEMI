@@ -1,0 +1,21 @@
+ABX0035 VS ABX0070
+******************
+
+Différences Rev1 vs Rev2
+
+Certains capteurs ont changé 
+
+     Remplacement de l'IMU du LSM9DS1 (9 axes) par une combinaison de deux IMU (BMI270 - IMU 6 axes et BMM150 - IMU 3 axes).
+     Remplacement du capteur de température et d'humidité de HTS221 pour HS3003.
+
+De plus, certains composants et modifications ont été apportés afin d'améliorer l'expérience des utilisateurs 
+
+     Remplacement de l'alimentation MPM3610 pour MP2322.
+     Ajout d'un cavalier à souder VUSB sur le dessus de la carte.
+     Nouveau point de test pour USB, SWDIO et SWCLK.
+
+Dois-je modifier mon utilisation de croquis dans la révision précédente 
+
+Pour les croquis réalisés à l'aide de bibliothèques telles que LSM9DS1 pour l'IMU ou HTS221 pour le capteur de température et d'humidité,
+pour la nouvelle révision, ces bibliothèques doivent être remplacées par Arduino_BMI270_BMM150 pour la nouvelle IMU combinée
+et Arduino_HS300x pour le nouveau capteur de température et d'humidité.

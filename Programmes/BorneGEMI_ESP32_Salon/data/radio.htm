@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+    <meta http-equiv="Content-language" content="fr" />
+    <meta http-equiv="Pragma" content="no-cache" /> 
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta http-equiv="Content-Script-Type" content="text/javascript" />
+    <meta name="Description" content="Borne GEMI" />
+    <meta name="Author" content="Jean-Luc NAPOLITANO" />
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link href="/style.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <title>Borne GEMI</title>
+
+    <script type="text/javascript">
+      var timerunefois;
+      var NbreStations = 0;
+      var station = "";
+      var oldnum = 0;
+      var radio = "";
+      var oldnom = "";
+      var oldlien = "";
+      function RecoisPremiereInfos() {
+        var request = new XMLHttpRequest();
+        request.overrideMimeType('text/plain');
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText;
+                txt = texte.split("*");
+                NbreStations = txt[0];
+                stations = txt[1];
+                //stations = encodeURIComponent(txt[1]);
+                document.getElementById("liste").innerHTML = stations;
+                window.clearInterval(timerunefois);
+                document.getElementById('volweb').value = 20;
+                document.getElementById('volgemi').value = 10;
+								document.getElementById("ip").innerHTML = txt[2];
+                document.getElementById("ssid").innerHTML = txt[3]; 
+              }
+            }
+          }
+        }
+        request.open("GET", "/ajaxlstradio", true);
+        request.send();
+      }
+      var req_cde = new XMLHttpRequest();
+      var req;
+      function SauveRadios() {
+        req = "/ajaxsauveradio?nb=" + NbreStations;
+        for (var i=1; i<=NbreStations; i++) {
+          req += "&nom" + i + "=" + document.getElementById("nom"+i).innerHTML;
+          req += "&lien" + i + "=" + encodeURIComponent(document.getElementById("lien"+i).innerHTML);
+        }
+        EnvoyerRequete();
+        creer_message(div_wait,"Une commande d'enregistrement a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre quelques secondes)");
+      }
+      function Monter(num) {
+        if (num > 1) {
+          if (!radio.paused) {
+            radio.pause();
+            radio.currentTime = 0;
+            radio.ended;
+            document.getElementById("joueweb"+num).innerHTML = "<img src=\"/droiter.png\" onclick=\"javascript:JouerWeb("+num+");\" title=\"Jouer depuis le navigateur.\">";
+            oldnum = 0;
+          }
+          var nom1 = document.getElementById("nom"+num).innerHTML;
+          var lien1 = document.getElementById("lien"+num).innerHTML;
+          var lienw1 = document.getElementById("web"+num).innerHTML;
+          var jgemi1 = document.getElementById("joue"+num).innerHTML;
+          var jweb1 = document.getElementById("joueweb"+num).innerHTML;
+          var nom2 = document.getElementById("nom"+(num-1)).innerHTML;
+          var lien2 = document.getElementById("lien"+(num-1)).innerHTML;
+          var lienw2 = document.getElementById("web"+(num-1)).innerHTML;
+          var jgemi2 = document.getElementById("joue"+(num-1)).innerHTML;
+          var jweb2 = document.getElementById("joueweb"+(num-1)).innerHTML;
+          lienw1 = lienw1.replace("radio"+num, "radio"+(num-1));
+          lienw2 = lienw2.replace("radio"+(num-1), "radio"+num);
+          jweb1 = jweb1.replace("JouerWeb("+num+")", "JouerWeb("+(num-1)+")");
+          jweb1 = jweb1.replace("stop.png", "droiter.png");
+          jweb2 = jweb2.replace("JouerWeb("+(num-1)+")", "JouerWeb("+num+")");
+          jweb2 = jweb2.replace("stop.png", "droiter.png");
+          document.getElementById("nom"+num).innerHTML = nom2;
+          document.getElementById("lien"+num).innerHTML = lien2;
+          document.getElementById("web"+num).innerHTML = lienw2;
+          document.getElementById("joue"+num).innerHTML = jgemi2;
+          document.getElementById("joueweb"+num).innerHTML = jweb2;
+          document.getElementById("nom"+(num-1)).innerHTML = nom1;
+          document.getElementById("lien"+(num-1)).innerHTML = lien1;
+          document.getElementById("web"+(num-1)).innerHTML = lienw1;
+          document.getElementById("joue"+(num-1)).innerHTML = jgemi1;
+          document.getElementById("joueweb"+(num-1)).innerHTML = jweb1;
+        } else {
+          alert("Mouvement impossible, on est déjà en haut de la liste!");
+        }
+      }
+      function Descendre(num) {
+        if (num < NbreStations) {
+          if (!radio.paused) {
+            radio.pause();
+            radio.currentTime = 0;
+            radio.ended;
+            document.getElementById("joueweb"+num).innerHTML = "<img src=\"/droiter.png\" onclick=\"javascript:JouerWeb("+num+");\" title=\"Jouer depuis le navigateur.\">";
+            oldnum = 0;
+          }
+          var nom1 = document.getElementById("nom"+num).innerHTML;
+          var lien1 = document.getElementById("lien"+num).innerHTML;
+          var lienw1 = document.getElementById("web"+num).innerHTML;
+          var jgemi1 = document.getElementById("joue"+num).innerHTML;
+          var jweb1 = document.getElementById("joueweb"+num).innerHTML;
+          var nom2 = document.getElementById("nom"+(num+1)).innerHTML;
+          var lien2 = document.getElementById("lien"+(num+1)).innerHTML;
+          var lienw2 = document.getElementById("web"+(num+1)).innerHTML;
+          var jgemi2 = document.getElementById("joue"+(num+1)).innerHTML;
+          var jweb2 = document.getElementById("joueweb"+(num+1)).innerHTML;
+          lienw1 = lienw1.replace("radio"+num, "radio"+(num+1));
+          lienw2 = lienw2.replace("radio"+(num+1), "radio"+num);
+          jweb1 = jweb1.replace("JouerWeb("+num+")", "JouerWeb("+(num+1)+")");
+          jweb1 = jweb1.replace("stop.png", "droiter.png");
+          jweb2 = jweb2.replace("JouerWeb("+(num+1)+")", "JouerWeb("+num+")");
+          jweb2 = jweb2.replace("stop.png", "droiter.png");
+          document.getElementById("nom"+num).innerHTML = nom2;
+          document.getElementById("lien"+num).innerHTML = lien2;
+          document.getElementById("web"+num).innerHTML = lienw2;
+          document.getElementById("joue"+num).innerHTML = jgemi2;
+          document.getElementById("joueweb"+num).innerHTML = jweb2;
+          document.getElementById("nom"+(num+1)).innerHTML = nom1;
+          document.getElementById("lien"+(num+1)).innerHTML = lien1;
+          document.getElementById("web"+(num+1)).innerHTML = lienw1;
+          document.getElementById("joue"+(num+1)).innerHTML = jgemi1;
+          document.getElementById("joueweb"+(num+1)).innerHTML = jweb1;
+        } else {
+          alert("Mouvement impossible, on est déjà au bas de la liste!");
+        }
+      }
+      function JouerWeb(num) {
+        station = "radio"+num;
+        //alert("station="+station+"\noldnum="+oldnum);
+        if ("radio" + oldnum != station && oldnum != 0) {
+          //alert("on arrête la précédente");
+          StopWeb(oldnum);
+        }
+        radio = document.getElementById(station);
+        if (!radio.paused) {
+          radio.pause();
+          radio.currentTime = 0;
+          radio.ended;
+          document.getElementById("joueweb"+num).innerHTML = "<img src=\"/droiter.png\" onclick=\"javascript:JouerWeb("+num+");\" title=\"Jouer depuis le navigateur.\">";
+          oldnum = 0;
+        } else {
+          radio.load();
+          radio.volume = document.getElementById("volweb").value/100;
+          radio.play();
+          radio.controls = true;
+          document.getElementById("joueweb"+num).innerHTML = "<img src=\"/stopr.png\" onclick=\"javascript:JouerWeb("+num+");\" title=\"Stopper depuis le navigateur.\">";
+          oldnum = num;
+        }
+      }
+      function setVolume(value) {
+        radio.volume = value / 100;
+      }
+      function StopWeb(num) {
+        radio = document.getElementById("radio"+num);
+        radio.pause();
+        radio.currentTime = 0;
+        radio.ended;
+        oldnum = 0;
+        document.getElementById("joueweb"+num).innerHTML = "<img src=\"/droiter.png\" onclick=\"javascript:JouerWeb("+num+");\" title=\"Jouer depuis le navigateur.\">";
+      }
+      function ChangeImage(im) {
+        if(im.endsWith("/droitev.png")) {
+          im = im.replace("/droitev.png","/stopv.png");
+        } else {
+          im = im.replace("/stopv.png","/droitev.png");
+        }
+        return(im);
+      }
+      function Jouer(nom,lien,im) {
+        var vol = document.getElementById('volgemi').value;
+        var lien;
+        var image = "";
+        if (oldnom != nom && oldnom != "") {
+          const images = document.querySelectorAll('img');
+          images.forEach(img => {
+            image = img.src;
+            if(image.endsWith("/stopv.png")) {
+              image = image.replace("/stopv.png", "/droitev.png");
+              img.src = image;
+            }
+          });
+        }
+        if (im.endsWith("/stopv.png")) {
+          req = "/radiostop?nom=" + oldnom;
+          EnvoyerRequete();
+        } else {
+          lien = lien.replace('&', '£');
+          lien = lien.replace('=', '%');
+          oldnom = nom;
+          req = "/radio?nom=" + nom + "&lien=" + lien + "&vol=";
+          EnvoyerRequete();
+        }
+      }
+      function VolumeGemi() {
+        var vol = document.getElementById('volgemi').value;
+        req = "/volume?vol=" + vol;
+        EnvoyerRequete();
+      }
+      function Editer(num) {
+        oldnum = num;
+        oldnom = document.getElementById("nom"+num).innerHTML;
+        oldlien = document.getElementById("lien"+num).innerHTML;
+        essai = div_edit.cloneNode(true);
+        essai.id = 'ajout';
+        essai.style="left:850px;width:700px;top:450px;border-radius:5px;border:1px solid;padding:15px 10px 15px 50px;background-repeat:no-repeat;background-position:10px center;background-color:#b0ffff;";
+        essai.querySelector("#mod_id").innerHTML = num;
+        essai.querySelector("#mod_nom").value = oldnom;
+        essai.querySelector("#mod_url").value = oldlien;
+        essai.querySelector("#mod_web").innerHTML = document.getElementById("web"+num).innerHTML;
+        essai.querySelector("#btnok").setAttribute("onclick","javascript:EditerValider();");
+        essai.querySelector("#btncancel").setAttribute("onclick","javascript:EditerAnnuler();");
+        document.body.appendChild(essai);
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+      }
+      function EditerValider() {
+        var num = essai.querySelector("#mod_id").innerHTML;
+        var nom = essai.querySelector("#mod_nom").value;
+        var lien = essai.querySelector("#mod_url").value;
+        var web = essai.querySelector("#mod_web").innerHTML;
+        if (nom == "" || lien == "") {
+          alert("Vous devez remplir tous les champs avant de valider.");
+          return;
+        }
+        if (nom != oldnom || lien != oldlien) {
+          document.getElementById("nom"+num).innerHTML = nom;
+          document.getElementById("lien"+num).innerHTML = lien;
+          document.getElementById("radio"+num).src = lien;
+        }
+        EditerAnnuler();
+      }
+      function EditerAnnuler() {
+        calque.style.display = 'none';
+        document.body.removeChild(document.getElementById('ajout'));
+      }
+      function Supprimer(num) {
+        oldnum = num;
+        oldnom = document.getElementById("nom"+num).innerHTML;
+        oldlien = document.getElementById("lien"+num).innerHTML;
+        if (window.confirm("Confirmez-vous la suppression de: \n" + oldnom + " - " + oldlien)) {
+          for (var i=num; i<NbreStations; i++) {
+            document.getElementById("nom"+i).innerHTML = document.getElementById("nom"+(i+1)).innerHTML;
+            document.getElementById("lien"+i).innerHTML = document.getElementById("lien"+(i+1)).innerHTML;
+            document.getElementById("web"+i).innerHTML = document.getElementById("web"+(i+1)).innerHTML;
+            document.getElementById("joue"+i).innerHTML = document.getElementById("joue"+(i+1)).innerHTML;
+            document.getElementById("joueweb"+i).innerHTML = document.getElementById("joueweb"+(i+1)).innerHTML;
+          }
+          document.getElementById('lstradios').deleteRow(-1);
+          NbreStations--;
+          document.getElementById('nbr').innerHTML = NbreStations + " Stations";
+        }
+      }
+      function AjouterRadio() {
+        num = NbreStations;
+        num++;
+        oldnom = "";
+        oldlien = "";
+        essai = div_edit.cloneNode(true);
+        essai.id = 'ajout';
+        essai.style="left:850px;width:700px;top:450px;border-radius:5px;border:1px solid;padding:15px 10px 15px 50px;background-repeat:no-repeat;background-position:10px center;background-color:#b0ffff;";
+        essai.querySelector("#mod_id").innerHTML = num;
+        essai.querySelector("#btnok").setAttribute("onclick","javascript:AjouterValider();");
+        essai.querySelector("#btncancel").setAttribute("onclick","javascript:EditerAnnuler();");
+        document.body.appendChild(essai);
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+      }
+      function AjouterValider() {
+        var nom = essai.querySelector("#mod_nom").value;
+        var lien = essai.querySelector("#mod_url").value;
+        if (nom == "" || lien == "") {
+          alert("Vous devez remplir tous les champs avant de valider.");
+          return;
+        }
+        if (URL_Valide(lien) != true) {
+          alert("Le lien URL de la radio n'est pas correcte!\nIl doit obligatoirement commencer par 'http://' ou 'https://'\net avoir la structure d'une URL standard.");
+          return;
+        }
+        num = essai.querySelector("#mod_id").innerHTML
+        var refTable = document.getElementById("lstradios");
+        var nouvelleLigne = refTable.insertRow(num-1);
+        var nouvelleCellule = nouvelleLigne.insertCell(0);
+        nouvelleCellule.setAttribute("id","num"+num);
+        var nouveauTexte = document.createTextNode(num);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(1);
+        nouvelleCellule.setAttribute("id","nom"+num);
+        nouveauTexte = document.createTextNode(nom);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(2);
+        nouvelleCellule.setAttribute("id","lien"+num);
+        nouveauTexte = document.createTextNode(lien);
+        nouvelleCellule.appendChild(nouveauTexte);
+        nouvelleCellule = nouvelleLigne.insertCell(3);
+        nouvelleCellule.setAttribute("id","web"+num);
+        nouvelleCellule.setAttribute("style","display:none;");
+        nouveauTexte = "<audio id=\"radio" + num + "\" preload=\"none\" src=\"" + lien + "\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        nouvelleCellule = nouvelleLigne.insertCell(4);
+        nouvelleCellule.setAttribute("id","md"+num);
+        nouveauTexte = "<img src=\"/haut.png\" onclick=\"javascript:Monter(" + num + ");\" title=\"Monter\"/>&nbsp;<img src=\"/bas_gris.png\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        nouvelleCellule = nouvelleLigne.insertCell(5);
+        nouvelleCellule.setAttribute("id","joue"+num);
+        nouveauTexte = "<img src=\"/droitev.png\" onclick=\"javascript:Jouer('" + nom + "','" + lien + "',this.src);this.src=ChangeImage(this.src);\" title=\"Jouer/Arrêter sur la borne.\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        nouvelleCellule = nouvelleLigne.insertCell(6);
+        nouvelleCellule.setAttribute("id","joueweb"+num);
+        nouveauTexte = "<img src=\"/droiter.png\" onclick=\"javascript:JouerWeb(" + num + ");\" title=\"Jouer depuis le navigateur.\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        nouvelleCellule = nouvelleLigne.insertCell(7);
+        nouveauTexte = "<img src=\"/edit.png\" onclick=\"javascript:Editer(" + num + ");\" title=\"Editer\"/>&nbsp;<img src=\"/corbeille.png\" onclick=\"javascript:Supprimer(" + num + ");\" title=\"Supprimer définitivement!\"/>";
+        nouvelleCellule.innerHTML = nouveauTexte;
+        refTable.appendChild(nouvelleLigne);
+        document.getElementById("md"+NbreStations).innerHTML = "<img src=\"/haut.png\" onclick=\"javascript:Monter(" + NbreStations + ");\" title=\"Monter\"/>&nbsp;<img src=\"/bas.png\" onclick=\"javascript:Descendre(" + NbreStations + ");\" title=\"Descendre\"/>";
+        NbreStations++;
+        document.getElementById('nbr').innerHTML = NbreStations + " Stations";
+        EditerAnnuler();
+      }
+      function URL_Valide(UrlTest) {
+        var protocole = "[a-z]+";
+        var user = "[a-zA-Z0-9_-]+";
+        var password = "[a-zA-Z0-9_-]+";
+        var hostname = "[a-z0-9-\.]+";
+        var port = "[0-9]+";
+        var resource = ".*";
+        var regex = RegExp(protocole + "://(" + user + "(:" + password+")?@)?" + hostname + "(:" + port + ")?" + "(/" + resource + ")?");
+         
+        return(regex.test(UrlTest));
+      }
+      function Micro() {
+        req = "/micro";
+        EnvoyerRequete();
+      }
+      function EnvoyerRequete() {
+        req_cde.onerror = onError;
+        req_cde.onreadystatechange = function() {
+          //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+          if (req_cde.readyState == 4) {
+            //alert(req_cde.readyState + " - " + req_cde.status + " - " + req_cde.responseText);
+            if (req_cde.status == 200) {
+              if (req_cde.responseText != null) {
+                //window.clearInterval(timercde);
+                alert(req_cde.responseText.replace('�','é'));
+                fin();
+                //window.location.reload();
+                return;
+              }
+            } else {
+              if (req_cde.responseText != null) {
+                fin();
+                //clearInterval(timercde);
+                alert(req_cde.responseText.replace('�','é'));
+              }
+            }
+          }
+        }
+        req_cde.open("GET", req, true);
+        req_cde.send();
+      }
+    </script>
+    <script type="text/javascript">
+      <!--// [CDATA[ 
+      var IsIE=!!document.all;
+      var calque;
+      var essai;
+      var timerint;
+      window.onload = function() {
+        calque = document.getElementById('overlay');
+        var calqueX = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        var calqueY = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        calque.style.width = Math.max(document.body.offsetWidth, calqueX) + 'px';
+        calque.style.height = Math.max(document.body.offsetHeight, calqueY) + 'px';
+        if(IsIE) {
+          calque.style.filter='alpha(opacity=0)';
+          calque.filters[0].opacity=0;
+        } else {
+          calque.style.opacity=0;
+        }
+      }
+      function creer_message(elt, texte) {
+        var i=0;
+        essai = elt.cloneNode(true);
+        essai.id = 'ajout';
+        if (elt.id == 'div_wait') {
+          texte = "<img src='/attente.gif' style='display:block; margin-left:auto; margin-right:auto;' alt='' /><br />" + texte;
+        }
+        essai.innerHTML = texte;
+        document.body.appendChild(essai);
+        if(IsIE) {
+          essai.style.filter='alpha(opacity=0)';
+          essai.filters[0].opacity=0;
+        } else {
+          essai.style.opacity=0;
+        }
+        calque.style.display = 'block';
+        essai.style.display = 'block';
+        timerint = setInterval(function() {
+          if(i==100) {
+            clearInterval(timerint);
+            timerint = false;
+            essai.onclick = fin;
+          } else {
+            if(IsIE) {
+              calque.filters[0].opacity = i*0.75;
+              essai.filters[0].opacity = i;
+            } else {
+              calque.style.opacity=(i/100)*0.75;
+              essai.style.opacity=i/100;
+            }
+            i=Math.min(i+5, 100);
+          }
+        }, 1);
+      }
+      function fin() {
+        var i=100;
+        if(!timerint) {
+          timerint = setInterval(function() {
+            if(i==0) {
+              clearInterval(timerint);
+              calque.style.display = 'none';
+              document.body.removeChild(document.getElementById('ajout'));
+            } else {
+              if(IsIE) {
+                calque.filters[0].opacity = i*0.75;
+                essai.filters[0].opacity = i;
+              } else{
+                calque.style.opacity=(i/100)*0.75;
+                essai.style.opacity = i/100;
+              }
+              i = Math.max(i-5,0);
+            }
+          }, 1);
+        }
+      }
+      function onError(event) {
+        console.error("Une erreur " + event.target.status + " s'est produite au cours de la réception du document.");
+      }
+      // ]] -->
+    </script>
+  </head>
+  <body>
+    <div id="bg_clouds">
+      <div id="main">
+        <div style="height:15px"></div>
+        <div class="cont_top_global"></div>
+        <div id="content"> <!-- Content englobant -->
+          <!-- entête  -->
+          <div class="header_top"></div>
+          <!-- div id="main_title" -->
+          <div id="main-wrapper">
+            <center>
+              <table align="center" border="0">
+                <tr>
+                  <td align="left" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                  <td valign="middle" nowrap>
+                    <h1 id="bnom">Borne GEMI</h1>
+                  </td>
+                  <td align="right" valign="top" width="200">
+                    <div id="moon"></div>
+                  </td>
+                </tr>
+              </table>
+              <table align="center" border="0">
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">IP/MAC:</font>
+                    <label id="ip" align="center" style="color:darkblue;font-weight:bold;">192.168.***.***</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                  </td>
+                </tr>
+              </table>
+            </center>
+          </div> <!-- Ferme main-wrapper -->
+          <div class="header_bot"></div>
+          <div style="height:15px"></div>
+          <!-- contenu  -->
+          <!-- Paramètres WiFi et températures -->
+          <div class="cont_top" align="center">
+            <table align="center" width="99%">
+              <tr>
+                <td style="width:99%;text-align:center;">
+                  <h2>Liste des stations</h2>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="cont" align="center"> <!-- contenu  -->
+            <table width="99%" border="0">
+              <tr>
+                <td id="liste" colspan="2" align="center" valign="top">
+                </td>
+              </tr>
+              <tr>
+                <td id="volume" align="center" >
+                  <form onchange="javascript:VolumeGemi();"><label for="volgemi" style="vertical-align:8px;">Volume Borne</label>&nbsp;<input type="range" id="volgemi" name="volgemi" min="6" max="21" step="1"></form>
+                </td>
+                <td align="center">
+                  <input type="range" id="volweb" name="volweb" min="0" max="100" step="1" onchange="javascript:setVolume(this.value)" style="vertical-align:-8px;">&nbsp;<label for="volweb">Volume Web</label>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" colspan="2" nowrap>
+                  <br/><button onclick="javascript:SauveRadios();"><span style="position:relative; top:-10px;"><em>Enregistrer</em></span></button>&nbsp;
+                  <button onclick="javascript:AjouterRadio();"><span style="position:relative; top:-10px;"><em>Ajouter une radio</em></span></button>
+                </td>
+              </tr>
+            </table>
+          </div> <!-- Ferme cont -->
+          <div class="cont_bot"></div>
+          <div style="height:15px"></div>
+          <!-- --------- -->
+          <div style="height:15px"></div>
+        </div> <!-- Ferme content englobant -->
+        <div class="cont_bot_global">
+          <button onclick="document.location.href='/index.htm';"><span style="position:relative; top:-10px;"><em>Accueil</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/sons.htm';"><span style="position:relative; top:-10px;"><em>Sons</em></span></button>&nbsp;&nbsp;
+          <button onclick="document.location.href='/borne.htm';"><span style="position:relative; top:-10px;"><em>Bornes</em></span></button>&nbsp;&nbsp;
+          <button onclick="javascript:Micro();"><span style="position:relative; top:-10px;"><em>M/A Micro</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/config','_blank');"><span style="position:relative; top:-10px;"><em>Voir config</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/configlog','_blank');"><span style="position:relative; top:-10px;"><em>Voir config LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/defaut.txt','_blank');"><span style="position:relative; top:-10px;"><em>Voir Vol./Stat.</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/logfile','_blank');"><span style="position:relative; top:-10px;"><em>Voir les LOG</em></span></button>&nbsp;&nbsp;
+          <button onclick="window.open('/firmware','_blank');"><span style="position:relative; top:-10px;"><em>Firmware</em></span></button>&nbsp;&nbsp;
+          <br/>
+        </div> <!-- Ferme cont_bot_global -->
+      </div> <!-- Ferme main -->
+    </div> <!-- Ferme bg_clouds -->
+    <div id="div_wait" class="wait" style="display:none;"></div>
+    <div id="div_success" class="success" style="display:none;"></div>
+    <div id="div_info" class="info" style="display:none;"></div>
+    <div id="div_edit" style="display:none;">
+      <table align='center' id='modif'>
+        <tr><th>Numéro</th><th>Nom</th><th>Lien</th><th></th></tr>
+        <tr>
+          <td id="mod_id" name="mod_id">0</td>
+          <td><input type="text" id="mod_nom" required/></td>
+          <td><input type="text" style="width:450px;" id="mod_url" required/></td>
+          <td style="display:none;" id="mod_web"></td>
+        </tr>
+        <tr>
+          <td colspan='2' align='center'><button id="btnok" onclick=""><span style="position:relative;"><em>Enregistrer</em></span></button></td>
+          <td colspan='2' align='center'><button id="btncancel" onclick=""><span style="position:relative;"><em>Annuler</em></span></button></td>
+        </tr>
+      </table>
+    </div>
+    <div id="overlay"></div>
+    <script type="text/javascript">
+      // On recueille les paramètres actuels, pour une seule fois au démarrage.
+      timerunefois = window.setInterval(RecoisPremiereInfos, 2000);
+    </script>
+    <br/><br/>
+  </body>
+</html>
