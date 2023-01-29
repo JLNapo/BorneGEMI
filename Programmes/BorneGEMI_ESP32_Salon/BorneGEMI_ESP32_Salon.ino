@@ -1,16 +1,16 @@
 /*
- * Gestion de la borne GEMI Chambre
+ * Gestion de la borne GEMI Salon
  * Cette partie de la borne execute les commandes et correspond avec GEMI pour celles qu'il ne peut traiter.
  *
  * Processeur ESP32 (DOIT ESP32 DEVKIT V1)
  * Amplificateur: MAX98357A (3w)
- * LED pilotées par : 74HC595 (8-bit serial - in / serial or parallel - out shift register with output latches 3 - state)
+ * LED pilotées par: 74HC595 (8-bit serial - in / serial or parallel - out shift register with output latches 3 - state)
  * Touches sensitives
  *
  * Proc. IDE arduino  : DOIT ESP32 DEVKIT V1
  * Proc. RTC (heure)  : DS3231 (sauvegardé par batterie)
- * Mot de passe WEB   : jlN300855
- * Mot de passe MAJ   : jlN300855
+ * Mot de passe WEB   : *********
+ * Mot de passe MAJ   : *********
  *
  *
  */
