@@ -1,7 +1,7 @@
 # Enceinte-Connectée-Domotique
 Créer une enceinte connectée pour votre domotique est possible à moindre frais.
 
-Une enceinte connectée avec peu délément et capable de commander votre domotique sans passer par un serveur externe est faisable facilement avec des éléments Arduino et un  peu d'électronique.
+Une enceinte connectée avec peu d'élément et capable de commander votre domotique sans passer par un serveur externe est faisable facilement avec des éléments Arduino et un  peu d'électronique.
 Cette borne (appelons la comme cela) est principalement composée de 2 processeurs.
 - Un Arduino NANO 33 BLE Sense modèle ABX0035 (maintenant remplacé par ABX0070, même fonctionnement mais librairie différentes)
 - Un ESP-WROOM-32 module prenant moins de place que les ESP32 et tout leur système de connexion et programmation.
