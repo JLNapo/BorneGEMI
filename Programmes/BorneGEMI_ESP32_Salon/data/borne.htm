@@ -42,6 +42,7 @@
                 window.clearInterval(timerunefois);
 								document.getElementById("ip").innerHTML = txt[2];
                 document.getElementById("ssid").innerHTML = txt[3]; 
+                document.getElementById("bnom").innerHTML = "Borne " + texte[4];
               }
             }
           }
@@ -118,7 +119,7 @@
             document.getElementById("lien"+num).innerHTML = lien;
             EditerAnnuler();
           } else {
-            alert("L'adresse IP de la borne gemi n'est pas correcte!\nElle doit obligatoirement avoir une structure standard IPV4\nex: 192.168.***.***.");
+            alert("L'adresse IP de la borne domotique n'est pas correcte!\nElle doit obligatoirement avoir une structure standard IPV4\nex: 192.168.***.***.");
           }
         }
       }
@@ -345,7 +346,7 @@
                 </tr>
                 <tr>
                   <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
-                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">Réseau WiFi</label>
                   </td>
                 </tr>
               </table>

@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta http-equiv="Content-Style-Type" content="text/css" />
     <meta http-equiv="Content-Script-Type" content="text/javascript" />
-    <meta name="Description" content="Borne GEMI" />
+    <meta name="Description" content="Borne Domotique" />
     <meta name="Author" content="Jean-Luc NAPOLITANO" />
     <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link href="/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="/jquery.min.js"></script>
-    <title>Borne GEMI</title>
+    <title>Borne Domotique</title>
 
     <script type="text/javascript">
       var timerunefois;
@@ -39,11 +39,12 @@
                 stations = txt[1];
                 //stations = encodeURIComponent(txt[1]);
                 document.getElementById("liste").innerHTML = stations;
-                window.clearInterval(timerunefois);
                 document.getElementById('volweb').value = 20;
-                document.getElementById('volgemi').value = 10;
+                document.getElementById('volume').value = 10;
 								document.getElementById("ip").innerHTML = txt[2];
-                document.getElementById("ssid").innerHTML = txt[3]; 
+                document.getElementById("ssid").innerHTML = txt[3];
+                document.getElementById("bnom").innerHTML = "Borne " + txt[4];
+                window.clearInterval(timerunefois);
               }
             }
           }
@@ -74,12 +75,12 @@
           var nom1 = document.getElementById("nom"+num).innerHTML;
           var lien1 = document.getElementById("lien"+num).innerHTML;
           var lienw1 = document.getElementById("web"+num).innerHTML;
-          var jgemi1 = document.getElementById("joue"+num).innerHTML;
+          var jdomo1 = document.getElementById("joue"+num).innerHTML;
           var jweb1 = document.getElementById("joueweb"+num).innerHTML;
           var nom2 = document.getElementById("nom"+(num-1)).innerHTML;
           var lien2 = document.getElementById("lien"+(num-1)).innerHTML;
           var lienw2 = document.getElementById("web"+(num-1)).innerHTML;
-          var jgemi2 = document.getElementById("joue"+(num-1)).innerHTML;
+          var jdomo2 = document.getElementById("joue"+(num-1)).innerHTML;
           var jweb2 = document.getElementById("joueweb"+(num-1)).innerHTML;
           lienw1 = lienw1.replace("radio"+num, "radio"+(num-1));
           lienw2 = lienw2.replace("radio"+(num-1), "radio"+num);
@@ -90,12 +91,12 @@
           document.getElementById("nom"+num).innerHTML = nom2;
           document.getElementById("lien"+num).innerHTML = lien2;
           document.getElementById("web"+num).innerHTML = lienw2;
-          document.getElementById("joue"+num).innerHTML = jgemi2;
+          document.getElementById("joue"+num).innerHTML = jdomo2;
           document.getElementById("joueweb"+num).innerHTML = jweb2;
           document.getElementById("nom"+(num-1)).innerHTML = nom1;
           document.getElementById("lien"+(num-1)).innerHTML = lien1;
           document.getElementById("web"+(num-1)).innerHTML = lienw1;
-          document.getElementById("joue"+(num-1)).innerHTML = jgemi1;
+          document.getElementById("joue"+(num-1)).innerHTML = jdomo1;
           document.getElementById("joueweb"+(num-1)).innerHTML = jweb1;
         } else {
           alert("Mouvement impossible, on est déjà en haut de la liste!");
@@ -113,12 +114,12 @@
           var nom1 = document.getElementById("nom"+num).innerHTML;
           var lien1 = document.getElementById("lien"+num).innerHTML;
           var lienw1 = document.getElementById("web"+num).innerHTML;
-          var jgemi1 = document.getElementById("joue"+num).innerHTML;
+          var jdomo1 = document.getElementById("joue"+num).innerHTML;
           var jweb1 = document.getElementById("joueweb"+num).innerHTML;
           var nom2 = document.getElementById("nom"+(num+1)).innerHTML;
           var lien2 = document.getElementById("lien"+(num+1)).innerHTML;
           var lienw2 = document.getElementById("web"+(num+1)).innerHTML;
-          var jgemi2 = document.getElementById("joue"+(num+1)).innerHTML;
+          var jdomo2 = document.getElementById("joue"+(num+1)).innerHTML;
           var jweb2 = document.getElementById("joueweb"+(num+1)).innerHTML;
           lienw1 = lienw1.replace("radio"+num, "radio"+(num+1));
           lienw2 = lienw2.replace("radio"+(num+1), "radio"+num);
@@ -129,12 +130,12 @@
           document.getElementById("nom"+num).innerHTML = nom2;
           document.getElementById("lien"+num).innerHTML = lien2;
           document.getElementById("web"+num).innerHTML = lienw2;
-          document.getElementById("joue"+num).innerHTML = jgemi2;
+          document.getElementById("joue"+num).innerHTML = jdomo2;
           document.getElementById("joueweb"+num).innerHTML = jweb2;
           document.getElementById("nom"+(num+1)).innerHTML = nom1;
           document.getElementById("lien"+(num+1)).innerHTML = lien1;
           document.getElementById("web"+(num+1)).innerHTML = lienw1;
-          document.getElementById("joue"+(num+1)).innerHTML = jgemi1;
+          document.getElementById("joue"+(num+1)).innerHTML = jdomo1;
           document.getElementById("joueweb"+(num+1)).innerHTML = jweb1;
         } else {
           alert("Mouvement impossible, on est déjà au bas de la liste!");
@@ -183,7 +184,7 @@
         return(im);
       }
       function Jouer(nom,lien,im) {
-        var vol = document.getElementById('volgemi').value;
+        var vol = document.getElementById('volume').value;
         var lien;
         var image = "";
         if (oldnom != nom && oldnom != "") {
@@ -207,8 +208,8 @@
           EnvoyerRequete();
         }
       }
-      function VolumeGemi() {
-        var vol = document.getElementById('volgemi').value;
+      function ReglerVolume() {
+        var vol = document.getElementById('volume').value;
         req = "/volume?vol=" + vol;
         EnvoyerRequete();
       }
@@ -472,7 +473,7 @@
                     <div id="moon"></div>
                   </td>
                   <td valign="middle" nowrap>
-                    <h1 id="bnom">Borne GEMI</h1>
+                    <h1 id="bnom">Borne Domotique</h1>
                   </td>
                   <td align="right" valign="top" width="200">
                     <div id="moon"></div>
@@ -487,7 +488,7 @@
                 </tr>
                 <tr>
                   <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
-                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">Réseau WiFi</label>
                   </td>
                 </tr>
               </table>
@@ -513,11 +514,11 @@
                 </td>
               </tr>
               <tr>
-                <td id="volume" align="center" >
-                  <form onchange="javascript:VolumeGemi();"><label for="volgemi" style="vertical-align:8px;">Volume Borne</label>&nbsp;<input type="range" id="volgemi" name="volgemi" min="6" max="21" step="1"></form>
+                <td align="center" >
+                  <form onchange="javascript:ReglerVolume();"><label for="volume" style="vertical-align:8px;font-weight:bold;">Volume Borne</label>&nbsp;<input type="range" id="volume" name="volume" min="6" max="21" step="1"/></form>
                 </td>
                 <td align="center">
-                  <input type="range" id="volweb" name="volweb" min="0" max="100" step="1" onchange="javascript:setVolume(this.value)" style="vertical-align:-8px;">&nbsp;<label for="volweb">Volume Web</label>
+                  <input type="range" id="volweb" name="volweb" min="0" max="100" step="1" onchange="javascript:setVolume(this.value)"/>&nbsp;<label for="volweb" style="vertical-align:8px;font-weight:bold;">Volume Web</label>
                 </td>
               </tr>
               <tr>

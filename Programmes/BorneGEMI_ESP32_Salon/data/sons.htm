@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta http-equiv="Content-Style-Type" content="text/css" />
     <meta http-equiv="Content-Script-Type" content="text/javascript" />
-    <meta name="Description" content="Borne GEMI" />
+    <meta name="Description" content="Borne Domotique" />
     <meta name="Author" content="Jean-Luc NAPOLITANO" />
     <link rel="icon" type="image/vnd.microsoft.icon" href="favicon.ico" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="favicon.png" />
     <link href="style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="jquery.min.js"></script>
-    <title>Borne GEMI</title>
+    <title>Borne Domotique</title>
 
     <script type="text/javascript">
       function RecoisPremiereInfos() {
@@ -29,6 +29,7 @@
                 document.getElementById("liste").innerHTML = texte[0];
 								document.getElementById("ip").innerHTML = texte[1];
                 document.getElementById("ssid").innerHTML = texte[2]; 
+                document.getElementById("bnom").innerHTML = "Borne " + texte[3];
                 window.clearInterval(timerunefois);
               }
             }
@@ -44,7 +45,7 @@
       var req;
       function Jouer(son, id) {
         //alert(son + "\n" + id);
-        var vol = document.getElementById('volgemi').value;
+        var vol = document.getElementById('volume').value;
         document.getElementById(id).innerHTML = "";
         req = "/play?son=" + son + "&vol=" + vol;
         req_cde.onreadystatechange = function() {
@@ -65,8 +66,8 @@
         req = "/micro";
         EnvoyerRequete();
       }
-      function VolumeGemi() {
-        var vol = document.getElementById('volgemi').value;
+      function ReglerVolume() {
+        var vol = document.getElementById('volume').value;
         req = "/volume?vol=" + vol;
         EnvoyerRequete();
       }
@@ -194,7 +195,7 @@
                     <div id="moon"></div>
                   </td>
                   <td valign="middle" nowrap>
-                    <h1 id="bnom">Borne GEMI</h1>
+                    <h1 id="bnom">Borne Domotique</h1>
                   </td>
                   <td align="right" valign="top" width="200">
                     <div id="moon"></div>
@@ -209,7 +210,7 @@
                 </tr>
                 <tr>
                   <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
-                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">Réseau WiFi</label>
                   </td>
                 </tr>
               </table>
@@ -235,8 +236,8 @@
                 </td>
               </tr>
               <tr>
-                <td id="volume" align="center" style="vertical-align:bottom;" nowrap>
-                  <label for="volgemi">Volume Borne</label>&nbsp;<form onchange="javascript:VolumeGemi();"><input type="range" id="volgemi" name="volgemi" min="6" max="21" step="1"></form>
+                <td align="center" style="vertical-align:bottom;" nowrap>
+                  <label for="volume"><b>Volume Borne</b></label>&nbsp;<form onchange="javascript:ReglerVolume();"><input type="range" id="volume" name="volume" min="6" max="21" step="1"/></form>
                 </td>
               </tr>
             </table>

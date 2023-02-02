@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta http-equiv="Content-Style-Type" content="text/css" />
     <meta http-equiv="Content-Script-Type" content="text/javascript" />
-    <meta name="Description" content="Borne GEMI" />
+    <meta name="Description" content="Borne Domotique" />
     <meta name="Author" content="Jean-Luc NAPOLITANO" />
     <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link href="/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="/jquery.min.js"></script>
-    <title>Borne GEMI</title>
+    <title>Borne Domotique</title>
 
     <script type="text/javascript">
       function RecoisPremiereInfos() {
@@ -26,8 +26,10 @@
             if (request.status == 200) {
               if (request.responseText != null) {
                 var texte = request.responseText.split(",");
+                var SysDomo = texte[1].split("_");
                 document.getElementById("ipfix").value = texte[0];
-                document.getElementById("name").value = texte[1];
+                document.getElementById("bnom").innerHTML = "Borne " + SysDomo[0];
+                document.getElementById("name").value = SysDomo[1];
                 document.getElementById("ipgw").value = texte[2];
                 document.getElementById("ipdns").value = texte[3];
                 document.getElementById("subnet").value = texte[4];
@@ -58,6 +60,10 @@
 								document.getElementById("ip").innerHTML = texte[29];
                 document.getElementById("ssid").innerHTML = texte[30]; 
                 document.getElementById("testled").checked = texte[31] == 1 ? true : false;
+                document.getElementById('voldef').value = texte[32];
+                document.getElementById('valdef').innerHTML = texte[32];
+                document.getElementById('volume').value = texte[33];
+                document.getElementById('valvol').innerHTML = texte[33];
                 window.clearInterval(timerunefois);
                 ListerRadios();
                 HeureEteHiver();
@@ -106,13 +112,16 @@
         req += "&hetehiver=" + heh + "&etehiver=" + eh + "&log=" + log;
         req += "&ftpuser=" + document.getElementById("ftpuser").value + "&ftppass=" + document.getElementById("ftppass").value + "&otapass=" + document.getElementById("otapass").value;
         req += "&hst=" + document.getElementById("HSTimeout").value;
-        req += "&tled=" + tl;
+        req += "&tled=" + tl + "&voldef=" + document.getElementById("voldef").value + "&volume=" + document.getElementById("volume").value;
         EnvoyerRequete();
         creer_message(div_wait,"Une commande d'enregistrement a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre plus de 30s)");
       }
       function Micro() {
         req = "/micro";
         EnvoyerRequete();
+      }
+      function PrintValue(lab, vol) {
+        document.getElementById(lab).innerHTML = vol;
       }
       function TestLEDs(ld) {
         req = "/testled?ld=" + ld;
@@ -543,7 +552,7 @@
                     <div id="moon"></div>
                   </td>
                   <td valign="middle" nowrap>
-                    <h1 id="bnom">Borne GEMI</h1>
+                    <h1 id="bnom">Borne Domotique</h1>
                   </td>
                   <td align="right" valign="top" width="200">
                     <div id="moon"></div>
@@ -558,7 +567,7 @@
                 </tr>
                 <tr>
                   <td align="center" valign="middle"><font style="color:red;font-weight:bold;">Réseau:</font>
-                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">MonReseauWifi</label>
+                    <label id="ssid" align="center" style="color:darkblue;font-weight:bold;">Réseau WiFi</label>
                   </td>
                 </tr>
               </table>
@@ -575,7 +584,7 @@
                   <h2>Paramètres réseau WiFi</h2>
                 </td>
                 <td style="width:50%;text-align:center;">
-                  <h2>Borne GEMI</h2>
+                  <h2>Borne Domotique</h2>
                 </td>
               </tr>
             </table>
@@ -590,7 +599,7 @@
                         <font color="blue">SSID1 (réseau)</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="ssid1" value="MonReseauWifi" pattern=".{5,}" required/>
+                        <input type="text" id="ssid1" value="WiFi_1" pattern=".{5,}" required/>
                       </td>
                     </tr>
                     <tr>
@@ -598,7 +607,7 @@
                         <font color="blue">PSK1 (mot de passe)</font>
                       </td>
                       <td align="left" width="150px">
-                        <input type="password" id="psk1" value="MotDePasseWifi" pattern=".{5,}" required/>
+                        <input type="password" id="psk1" value="MDP WiFi 1" pattern=".{5,}" required/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -614,7 +623,7 @@
                         <font color="blue">SSID2 (réseau)</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="ssid2" value="MonReseauWifi" pattern=".{5,}" required/>
+                        <input type="text" id="ssid2" value="WIFI_2" pattern=".{5,}" required/>
                       </td>
                     </tr>
                     <tr>
@@ -622,7 +631,7 @@
                         <font color="blue">PSK2 (mot de passe)</font>
                       </td>
                       <td align="left" width="150px">
-                        <input type="password" id="psk2" value="MotDePasseWifi" pattern=".{5,}" required/>
+                        <input type="password" id="psk2" value="MDP WiFi 2" pattern=".{5,}" required/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -638,7 +647,7 @@
                         <font color="blue">SSID3 (réseau)</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="ssid3" value="MonReseauWifi" pattern=".{5,}" required/>
+                        <input type="text" id="ssid3" value="WIFI_3" pattern=".{5,}" required/>
                       </td>
                     </tr>
                     <tr>
@@ -646,7 +655,7 @@
                         <font color="blue">PSK3 (mot de passe)</font>
                       </td>
                       <td align="left" width="150px">
-                        <input type="password" id="psk3" value="MotDePasseWifi" pattern=".{5,}" required/>
+                        <input type="password" id="psk3" value="MDP WiFi 3" pattern=".{5,}" required/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -662,7 +671,7 @@
                         <font color="blue">SSID4 (réseau)</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="ssid4" value="MonReseauWifi" pattern=".{5,}" required/>
+                        <input type="text" id="ssid4" value="WiFi_4" pattern=".{5,}" required/>
                       </td>
                     </tr>
                     <tr>
@@ -670,7 +679,7 @@
                         <font color="blue">PSK4 (mot de passe)</font>
                       </td>
                       <td align="left" width="150px">
-                        <input type="password" id="psk4" value="MotDePasseWifi" pattern=".{5,}" required/>
+                        <input type="password" id="psk4" value="MDP WiFi 4" pattern=".{5,}" required/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -705,16 +714,32 @@
                         <input type="text" style="width:250px;" id="access_key" value="uFvtzsB/s20inH3sEUxAbNIBucyfhdHxcu7ARpL580euQKg5kMQzzA==" title="L'ID de la borne  (indicatif non utilisé par les paramètres)" readonly/>
                       </td>
                     </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Volume important</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="range" id="voldef" name="voldef" min="6" max="21" step="1" onChange="javascript:PrintValue('valdef', this.value);"/> <label id="valdef" style="vertical-align:8px;">15</label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Volume normal</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="range" id="volume" name="volume" min="6" max="21" step="1" onChange="javascript:PrintValue('valvol', this.value);"/> <label id="valvol" style="vertical-align:8px;">15</label>
+                      </td>
+                    </tr>
                   </table>
                 </td>
                 <td style="width:50%;" align="center" valign="top">
                   <table align="center" border="0">
                     <tr>
                       <td align="right" nowrap>
-                        <font color="blue">Nom de la borne GEMI</font>
+                        <font color="blue">Nom de la borne domotique</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="name" value="Salon" onKeyUp="javascript:firstCap(this);" title="Le nom qui sera utilisé par la borne ('GEMI_' est ajouté automatiquement)."/>
+                        <input type="text" id="name" placeholder="Emplacement" onKeyUp="javascript:firstCap(this);" title="Le nom qui sera utilisé par la borne ('SysDomo_' est ajouté automatiquement)."/>
                       </td>
                     </tr>
                     <tr>
@@ -730,7 +755,7 @@
                         <font color="blue">Utilisateur WEB</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="webuser" value="JLN" title="Pour l'accès à cette page WEB" required/>
+                        <input type="text" id="webuser" placeholder="Utilisateur" title="Pour l'accès à cette page WEB" required/>
                       </td>
                     </tr>
                     <tr>
@@ -738,7 +763,7 @@
                         <font color="blue">Mot de passe WEB</font>
                       </td>
                       <td align="left" width="150px" nowrap>
-                        <input type="password" id="webpass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Pour l'accès à cette page WEB" required/>
+                        <input type="password" id="webpass" placeholder="mot de passe" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Pour l'accès à cette page WEB" required/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -754,7 +779,7 @@
                         <font color="blue">IP serveur NTP</font>
                       </td>
                       <td align="left" colspan="2" nowrap>
-                        <input type="text" id="ipntp" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipntp','ip');" title="Respecter le format : 000.000.000.000" required/>
+                        <input type="text" id="ipntp" maxlength="15" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipntp','ip');" title="Respecter le format : 000.000.000.000" required/>
                       </td>
                     </tr>
                     <tr>
@@ -889,7 +914,6 @@
                                   <option value="baisse"> baisse </option>
                                   <option value="coupe"> coupe </option>
                                   <option value="diminue"> diminue </option>
-                                  <option value="redémarre"> redémarre </option>
                                   <option value="en route"> en route </option>
                                   <option value="éteint"> éteint </option>
                                   <option value="ferme"> ferme </option>
@@ -898,6 +922,7 @@
                                   <option value="mettre"> mettre </option>
                                   <option value="monte"> monte </option>
                                   <option value="ouvre"> ouvre </option>
+                                  <option value="redémarre"> redémarre </option>
                                   <option value="remets"> remets </option>
                                   <option value="souhaite"> souhaite </option>
                                   <option value="supprime"> supprime </option>
@@ -930,7 +955,7 @@
                                   <option value="frigidaire"> frigidaire </option>
                                   <option value="frigo"> frigo </option>
                                   <option value="four"> four </option>
-                                  <option value="GÉMI"> GEMI </option>
+                                  <option value="GÉMI"> Nom de votre domotique </option>
                                   <option value="heure"> heure </option>
                                   <option value="jauge"> jauge </option>
                                   <option value="jauge à fioul"> jauge à fioul </option>
@@ -1127,7 +1152,7 @@
                         <font color="blue">Utilisateur FTP</font>
                       </td>
                       <td align="left" colspan='2'>
-                        <input type="text" id="ftpuser" value="JLN"/>
+                        <input type="text" id="ftpuser" placeholder="Utilisateur"/>
                       </td>
                     </tr>
                     <tr>
@@ -1135,7 +1160,7 @@
                         <font color="blue">Mot de passe FTP</font>
                       </td>
                       <td align="left">
-                        <input type="password" id="ftppass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
+                        <input type="password" id="ftppass" placeholder="Mot de passe" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -1151,7 +1176,7 @@
                         <font color="blue">Mot de passe OTA</font>
                       </td>
                       <td align="left">
-                        <input type="password" id="otapass" value="jlN300855" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
+                        <input type="password" id="otapass" placeholder="Mot de passe" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"/>
                       </td>
                       <td align="left">
                         <section title="Masquer/Démasquer">
@@ -1167,7 +1192,7 @@
                         <font color="blue">IP (adresse ip fixe)</font>
                       </td>
                       <td align="left" colspan="2">
-                        <input type="text" id="ipfix" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipfix','ip');" title="Respecter le format :000.000.000.000" required/>
+                        <input type="text" id="ipfix" maxlength="15" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipfix','ip');" title="Respecter le format :000.000.000.000" required/>
                       </td>
                     </tr>
                     <tr>
@@ -1175,7 +1200,7 @@
                         <font color="blue">Adresse IP GW</font>
                       </td>
                       <td align="left" colspan='2'>
-                        <input type="text" id="ipgw" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipgw','ip');" title="Respecter le format :000.000.000.000" required/>
+                        <input type="text" id="ipgw" maxlength="15" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipgw','ip');" title="Respecter le format :000.000.000.000" required/>
                       </td>
                     </tr>
                     <tr>
@@ -1183,7 +1208,7 @@
                         <font color="blue">Adresse IP DNS</font>
                       </td>
                       <td align="left" colspan='2'>
-                        <input type="text" id="ipdns" maxlength="15" value="192.168.***.***" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipdns','ip');" title="Respecter le format :000.000.000.000" required/>
+                        <input type="text" id="ipdns" maxlength="15" placeholder="192.168.***.***" onKeyPress="return scanTouche(event,'ip');" onKeyUp="masqueSaisie('ipdns','ip');" title="Respecter le format :000.000.000.000" required/>
                       </td>
                     </tr>
                     <tr>

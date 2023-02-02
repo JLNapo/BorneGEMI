@@ -4,13 +4,13 @@
  *
  * Processeur ESP32 (DOIT ESP32 DEVKIT V1)
  * Amplificateur: MAX98357A (3w)
- * LED pilotées par: 74HC595 (8-bit serial - in / serial or parallel - out shift register with output latches 3 - state)
+ * LED pilotées par : 74HC595 (8-bit serial - in / serial or parallel - out shift register with output latches 3 - state)
  * Touches sensitives
  *
  * Proc. IDE arduino  : DOIT ESP32 DEVKIT V1
  * Proc. RTC (heure)  : DS3231 (sauvegardé par batterie)
- * Mot de passe WEB   : *********
- * Mot de passe MAJ   : *********
+ * Mot de passe WEB   : jlN300855
+ * Mot de passe MAJ   : jlN300855
  *
  *
  */
@@ -21,6 +21,7 @@
 #include <WiFiMulti.h>
 #include <Update.h>
 #include <WiFiUdp.h>
+//#include <Wire.h>
 #include "RTClib.h"
 #include <Audio.h>
 #include <SPIFFS.h>
@@ -30,48 +31,48 @@
 #include "esp32_ping.h"
 
 /* Necessaire au Réseau WiFi */
-String MyName = "GEMI_Salon";                                                         // Nom visible sur le réseau <= Si nécessaire la fonction ESP.getChipId() peut ajouter l'ID de la puce à la fin.
-int nbReseauWiFi = 4;                                                                 // Nombre de réseaux disponnibles chez moi
-String ssid1 = "SSID1";                                                               // SSID (Nom du reseau wifi)
-String pass1 = "Pass1";                                                               // Password (Mot de passe wifi)
-String ssid2 = "SSID2";                                                               // SSID (Nom du reseau wifi)
-String pass2 = "Pass2";                                                               // Password (Mot de passe wifi)
-String ssid3 = "SSID3";                                                               // SSID (Nom du reseau wifi)
-String pass3 = "Pass3";                                                               // Password (Mot de passe wifi)
-String ssid4 = "SSID4";                                                               // SSID (Nom du reseau wifi)
-String pass4 = "Pass4";                                                               // Password (Mot de passe wifi)
-IPAddress ipAdresse(adresse IP fixe de la borne);                                     // IP locale de ce module (à fournir au serveur dns, normalement la Box)
-IPAddress gateway(adresse IP de la box);                                              // L'IP de la box
+String SysDomo = "GEMI";                                                              // Nom donné au système domotique (pour moi GEMI => Gestion Electronique de Maison Individuelle)
+String MyName = SysDomo + "_Salon";                                                   // Nom visible sur le réseau <= Si nécessaire la fonction ESP.getChipId() peut ajouter l'ID de la puce à la fin.
+int nbReseauWiFi = 4;                                                                 // Nombre de réseau disponnibles dans le lieu
+String ssid1 = "WiFi_1";                                                              // SSID (Nom du reseau wifi)
+String pass1 = "MDP WiFi 1";                                                          // Password (Mot de passe wifi)
+String ssid2 = "WiFi_2";                                                              // SSID (Nom du reseau wifi)
+String pass2 = "MDP WiFi 2";                                                          // Password (Mot de passe wifi)
+String ssid3 = "WiFi_3";                                                              // SSID (Nom du reseau wifi)
+String pass3 = "MDP WiFi 3";                                                          // Password (Mot de passe wifi)
+String ssid4 = "WiFi_4";                                                              // SSID (Nom du reseau wifi)
+String pass4 = "MDP WiFi 4";                                                          // Password (Mot de passe wifi)
+IPAddress ipAdresse(192, 168, 000, 000);                                              // IP locale de ce module (fourni par le serveur dns, normalement la Box)
+IPAddress gateway(192, 168, 000, 000);                                                // L'IP de la box
 IPAddress subnet(255, 255, 255, 0);                                                   // Mask réseau
-IPAddress dns(adresse IP de la box);                                                  // L'IP de la box (ou d'un serveur DNS du reseau)
-
-const uint32_t connectTimeoutMs = 10000;                                              // Timeout de connexion WiFiMulti
+IPAddress dns(192, 168, 000, 000);                                                    // L'IP de la box (ou d'un serveur NTP)
+const uint32_t connectTimeoutMs = 10000;                                              // Tmeout de connexion WiFiMulti
 String MyIP = "";                                                                     // Contient l'adresse IP avec séparateur (point) comme chaine
 String MAC = "";                                                                      // Adresse MAC du module (peut servir pour éventuellement paramétrer la box)
 String MySSID = "";
 String MyPass = "";
-String FTPuser = "User FTP";                                                          // Utilisateur FTP
-String FTPpass = "Pass FTP";                                                          // Mot de passe FTP
-String OTApass = "Pass OTA";                                                          // Mot de passe OTA (mise à jour via WiFi)
-char USR_WEB[] = "User WEB";                                                          // Utilisateur pour le web (indispensable)
-char PSS_WEB[] = "Pass WEB";                                                          // Mot de passe pour le web (indispensable)
+String FTPuser = "Utilisateur FTP";                                                   // Utilisateur FTP
+String FTPpass = "MDP FTP";                                                           // Mot de passe FTP
+String OTApass = "MDP OTA";                                                           // Mot de passe OTA
+char USR_WEB[] = "Utilisateur WEB";                                                   // Utilisateur pour le web (indispensable)
+char PSS_WEB[] = "MDP WEB";                                                           // Mot de passe pour le web (indispensable)
 bool Log = false;                                                                     // Enregistrer dans un fichier Log les différentes actions
 byte LogMois = 0;                                                                     // Mois en cours pour les Log
 
-String VoiceRss = F("http://api.voicerss.org/?key=votre clé VoiceRss&hl=fr-fr&c=MP3&f=32khz_16bit_mono&src="); // Si nécessaire la phrase texte à envoyer à ce serveur pour obtenir un mp3 lu en streaming
-String UID_Nano = F("UID du NANO obtenu via un programme fourni par la librairie Picovoice");
-String Access_Key = F("Access key (clé de votre compte) Picovoice");
+String VoiceRss = F("http://api.voicerss.org/?key=b1b971dd1c88484799e674f32ffd4e66&hl=fr-fr&c=MP3&f=32khz_16bit_mono&src=");
+String UID_Nano = F("AD-6A-DF-9D-1D-4F-34-72");
+String Access_Key = F("uFvtzsB/s20inH3sEUxAbNIBucyfhdHxcu7ARpL580euQKg5kMQzzA==");
 
-/************************************** CE QUI EST AU DESSUS DE CE TRAIT EST SPECIFIQUE A CHAQUE BORNE, AU DESSOUS, EST COMMUN A TOUTES LES BORNES *******************************************************/
+/************************************** CE QUI EST AU DESSUS DE CETTE LIGNE EST SPECIFIQUE A CHAQUE BORNE, AU DESSOUS tout EST COMMUN A TOUTES LES BORNES *******************************************************/
 
-const char Version[] = "0.2.0.3";
+const char Version[] = "0.2.1.0";
 
 /* I2S Connexion et boutons */
 #define I2S_DOUT        25                                                            // I2S pour la connexion avec l'ampli MAX98357A
-#define I2S_BCLK        26                                                            // I2S pour la connexion avec l'ampli MAX98357A
-#define I2S_LRC         27                                                            // I2S pour la connexion avec l'ampli MAX98357A
-#define Serial_RX       16                                                            // 16 et 17 servent au port série de
-#define Serial_TX       17                                                            // communication avec le NANO 33 BLE Sense
+#define I2S_BCLK        26
+#define I2S_LRC         27
+#define Serial_RX       16                                                            // 16 et 17 servent au port série de communication avec le NANO 33 BLE Sense
+#define Serial_TX       17
 #define bgClock         13                                                            // Clock du 74HC595 (BarGraph)
 #define bgLatch         12                                                            // Latch du 74HC595 (BarGraph)
 #define bgData          14                                                            // Data  du 74HC595 (BarGraph)
@@ -82,9 +83,9 @@ const char Version[] = "0.2.0.3";
 #define ledEcoute       32                                                            // (rvB) LED Arrêt/Marche écoute (allumé avec "Hé! GÉMI" et s'éteint après la commande ou l'abandon utilisateur après ~5/6s ou commande non comprise (avec message).
 #define ledWiFi         15                                                            // (rVb) Allumée pendant la mise à l'heure ou la connexion WiFi (verte)
                                                                                       // Etat des couleurs de la LED RVB => Rouge = micro coupé (juste pas d'analyse). Bleu = écoute de cde. Verte = Pas de WiFi ou Mise à l'heure en cours.
-
 /* Diverses variables */
-int Volume = 15;                                                                      // Valeur par défaut du volume (avant lecture des paramètres dans "config.ini"
+int Volume = 15;                                                                      // Volume par défaut au premier démarrage
+int VolDef = 15;                                                                      // Volume par défaut pour certaine réponse importante (ex: alarme arrivée à son terme)
 bool VolReg = false;                                                                  // Pour enregistrer après un temps le réglage du volume depuis la borne
 bool LedReg = false;                                                                  // Pour l'allumage des leds de volume
 int LedVal = 1;                                                                       // Valeur des LEDs allumées
@@ -94,30 +95,31 @@ unsigned long VolMillis;                                                        
 unsigned long LedMillis;                                                              // Temporisation avant l'exctinction des leds
 byte NumStation = 1;                                                                  // Station par défaut
 byte NbreRadios = 22;                                                                 // Nombre maxi de Stations de radio
-byte NbreBornes = 3;                                                                  // Nombre maxi de bornes GEMI
+byte NbreBornes = 3;                                                                  // Nombre maxi de bornes domotique
 String RadioOld = "";                                                                 // Lien http vers la station de radio en cours.
 bool RadioON = false;                                                                 // Passe à true quand la radio marche, sinon false
 bool BtnON = false;                                                                   // Flag bouton appuyé
 bool TouchON = false;                                                                 // Flag Touche sensitive appuyée
 String startString = "";                                                              // Date heure de démarrage
-String webString = "";                                                                // String bateau qui sert au WEB mais pas que...
+String webString = "";
 bool bgReg[8];                                                                        // Registre à décalage du 74HC595
-bool bgSens = false;                                                                  // Pour le sens de l'allumage des LEDs lors d'une perte de connexion WiFi.
+bool bgSens = false;
 bool Fait = false;                                                                    // Commande terminée
-bool HandShakeWait = false;                                                           // Passe à true si l'ESP32 recois "open" (ouverture d'une commande (le NANO a recu "Hé GEMI"). L'ESP32 joue le son "ON.mp3" et envoi "ready" au NANO (HandShake)
-bool HandShakeState = false;                                                          // Statut du HandShake de toute la commande => passe à true au début et ne passe à false que lorsque toute la commande est terminée et envoi un "finish" au NANO.
-unsigned long HandShakeMillis;                                                        // Pour le timeout du "HandShake"
-int HandShakeTimeout = 10000;                                                         // Nombre de secondes du timeout de la communication "HandShake"
-bool AudioState = false;                                                              // Passe à true au début de lecture d'un MP3 et à false lorsque c'est terminé
+bool HandShakeWait = false;                                                           // Passe à true si l'ESP32 recois "open" (ouverture d'une commande => le NANO entend "Hé GEMI" et envoi "open" à l'ESP32). L'ESP32 joue le son "on.mp3" et envoi "ready" au NANO (HandShake)
+bool HandShakeState = false;                                                          // Statut du HandShake de toute la commande => passe à true au début et ne passe à false que lorsque toute la commande est terminée (réponse de l'objet connecté comprise).
+unsigned long HandShakeMillis;                                                        // Pour le timeout du "HandShake" en cas d'un faux positif.
+int HandShakeTimeout = 10000;                                                         // Nombre de millisecondes du timeout de la communication NANO/ESP32 ("HandShake")
+bool AudioState = false;                                                              // Passe à true au début de lecture d'un MP3 et à false lorsque c'est terminé.
 bool Alarme = false;                                                                  // Pour le déclenchement d'une alarme (ex: "mets une alarme dans 10mn" ou "mets une larme à 10H15")
-uint32_t AlarmeEnSeconde = 0;                                                         // Pour la programmation de l'alarme
-float TempOffSet = 0.0;                                                               // OffSet (décalage) de la température mesurée
-bool TestLEDStart = false;
+bool AlarmeEtape = false;                                                             // Fait sonner l'alarme une deuxième fois au bot de 5s
+uint32_t AlarmeEnSeconde = 0;                                                         // Temps en secondes pour la programmation de l'alarme
+float TempOffSet = 0.0;                                                               // OffSet (décalage) de la température mesurée (pour tenir compte de la température dûe au fonctionnement de l'électronique)
+bool TestLEDStart = false;                                                            // Faire un test des LEDs au démarrage (oui/non => Defaut: NON) on peut régler ce paramètre ou faire un test depuis la page WEB.
 
-/* functions qui retournent la date en strings (char) */
-/* Longueur des chaînes pour chaque jour ou mois */
-#define SECS_PER_HOUR ((time_t)(3600UL))
-#define dt_SHORT_STR_LEN  3                                                           // La longueur des chaînes courtes
+/* functions qui retournent la date en strings (char) en francais */
+// Longueur des chaînes pour chaque jour ou mois
+#define SECS_PER_HOUR ((time_t)(3600UL))                                              // Necessaire au calcul en fonction de l'heure recueillie par NTP.
+#define dt_SHORT_STR_LEN  3                                                           // La longueur des chaînes courtes pour les ou les mois
 #define dt_MAX_STRING_LEN 9                                                           // Longueur de la chaîne de date la plus longue (hors null de fin)
 static char buffer[dt_MAX_STRING_LEN+1];                                              // Doit être suffisamment grand pour la chaîne la plus longue et la valeur null de fin
 const PROGMEM char * const PROGMEM monthNames_P[] = {"Décembre","Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Décembre"};
@@ -150,8 +152,8 @@ char* dayShortStr(uint8_t day) {
   return buffer;
 }
 
-/* Necessaire pour la date et l'heure */                                              // NTP actuel : Freebox (192, 168, ***, ***) ou ntp.midway.ovh (80, 67, 184, 1)
-IPAddress TimeServer(192, 168, ***, ***);                                               // Pour l'heure avec l'adresse de la box internet (certaines comme free ont un serveur NTP)
+/* Necessaire pour la date et l'heure */                                              // NTP actuel : Adresse IP de la box (si NTP a été mis dans les paramètres) ou exemple ntp.midway.ovh (80, 67, 184, 1)
+IPAddress TimeServer(192, 168, 000, 000);                                             // Pour l'heure avec l'adresse de la box internet (certaines comme free ont un serveur NTP)
 const int NTP_PACKET_SIZE = 48;                                                       // L'horodatage NTP se trouve dans les 48 premiers octets du message
 byte packetBuffer[NTP_PACKET_SIZE];                                                   // Tampon pour contenir paquets entrants et sortants
 uint16_t TimePort = 2390;                                                             // Port local pour écouter les paquets UDP Normalement écoute sur 2390 et envoi sur 123 (essai possible : 2390, 123, 8888)
@@ -166,18 +168,18 @@ bool hEteHiver = true;                                                          
 uint16_t nbMinJour = 0;                                                               // Nombre de minute écoulées depuis le début de journée (depuis 00:00)
 
 /* Instantiation et gestion des objets */
-WiFiMulti wifiMulti;                                                                  // Déclaration de l'instance WiFi
+WiFiMulti wifiMulti;
 WiFiUDP udp;                                                                          // Une instance UDP pour nous laisser envoyer et recevoir des paquets NTP
 WebServer server(80);                                                                 // Initialisation de la librairie serveur
 WiFiClient client;                                                                    // Initialisation de la librairie client (WiFiClient)
 FtpServer ftpSrv;                                                                     // Initialisation du serveur FTP
 Audio audio;                                                                          // Création de l'objet Audio
 RTC_DS3231 rtc;                                                                       // Création de l'objet RTC pour l'heure
-DateTime now;                                                                         // Déclaration de l'objet "now" pour date et heure depuis le RTC
-bool EteHiver = true;                                                                 // Appliquer l'heure d'été. Si pas de changement été/hiver, sinon l'heure d'hiver sera prise (on en parle à Bruxelles).
-HardwareSerial SerialNano(1);                                                         // Déclaration du 2ème port série (cette instance permet un paramétrage personnalisé)
+DateTime now;
+bool EteHiver = true;                                                                 // Appliquer l'heure d'été si pas de changement été/hiver, sinon l'heure d'hiver sera prise.
+HardwareSerial SerialNano(1);                                                         // Déclaration du port série
 
-void Attend(int tmp) {                                                                // Remplace delay() sans arrêter les taches d'interruptions du processeur (en millisecondes) et évite le reboot fait par le WatchDog
+void Attend(int tmp) {                                                                // Remplace delay() sans arrêter les taches du processeur (en millisecondes)
   unsigned long horloge = millis() + tmp;
   while (horloge > millis()) {
     yield();
@@ -185,10 +187,7 @@ void Attend(int tmp) {                                                          
 }
 
 void setup() {
-  Serial.begin(115200);                                                               // Pour le debuggage
-  SerialNano.begin(115200, SERIAL_8N1, Serial_RX, Serial_TX);                         // initialize UART pour dialogue avec NANO BLE Sense
-
-  bool Connexion = false;                                                             // Statut de la connexion réseau
+  bool Connexion = false;                                                               // Statut de la connexion réseau
   pinMode(btnPlus, INPUT_PULLDOWN);
   pinMode(btnMoins, INPUT_PULLDOWN);
   pinMode(btnMicro, INPUT_PULLDOWN);
@@ -203,8 +202,10 @@ void setup() {
   digitalWrite(ledWiFi, LOW);
 //  Serial.println(F("\nDebut du SETUP.\n"));
 
-  SPIFFS.begin();
+  Serial.begin(115200);                                                               // Pour le debuggage
+  SerialNano.begin(115200, SERIAL_8N1, Serial_RX, Serial_TX);                         // initialize UART pour dialogue avec NANO BLE Sense
 
+  SPIFFS.begin();
 //  Serial.println(F("Démarrage RTC"));
   if (!rtc.begin()) {
 //    Serial.println(F("Impossible de trouver le RTC !"));
@@ -215,14 +216,14 @@ void setup() {
   now = rtc.now();
 
   /* Selection du volume et d'une Station par défaut */
-  LireConfig();                                                                       // Lecture de "config.ini" (tous les paramètres enregistrées via la page WEB)
-  LireConfigLog();                                                                    // Lecture du fichier de config des LOG pour éventuellement un debug
+  LireConfig();
+  LireConfigLog();
   LireAlarme();                                                                       // Lecture et affichage de la programmation des alarmes (LED).
-  LireDefaut();                                                                       // Lecture des valeur par défaut (volume, station radio, nombre de radios, nombre de borne)
-  if (Volume == 0) Volume = 15;                                                       // en principe on fait varier le volume de 6 à 21 dans l'application, mais on ne sait jamais...
+  LireValeurDefaut();
+  if (Volume == 0) Volume = 15;
 
-  digitalWrite(LED_BUILTIN, HIGH);                                                    // Extinction de la LED_BUILTIN (pas utilisé ici, ni dans le montage, ni dans l'electronique)
-  digitalWrite(ledWiFi, HIGH);                                                        // Notre LED RVB entre en scène en vert...
+  digitalWrite(LED_BUILTIN, HIGH);                                                    // Extinction de la LED_BUILTIN
+  digitalWrite(ledWiFi, HIGH);
   WiFi.setHostname(MyName.c_str());
   if (WiFi.getMode() != WIFI_STA) {
     WiFi.mode(WIFI_STA);
@@ -249,21 +250,21 @@ void setup() {
   wifiMulti.addAP(s3, p3);
   wifiMulti.addAP(s4, p4);
   WiFi.setAutoReconnect(true);
-  WiFi.config(ipAdresse, gateway, subnet, dns);                                       // Le DNS n'est pas indispensable, mais permet de voir nos bornes sur le réseau interne
+  WiFi.config(ipAdresse, gateway, subnet, dns);                                       // Le DNS n'est pas indispensable
   int i = 1;
   int state;
   while (wifiMulti.run() != WL_CONNECTED) {
     Attend(500);
 //    Serial.print(F("."));
     state = state == LOW ? HIGH : LOW;
-    digitalWrite(ledWiFi, state);                                                     // Voyant de fonctionnement (chargement et connection)
+    digitalWrite(LED_BUILTIN, state);                                                 // Voyant de fonctionnement au bleu (chargement et connection)
     i++;
-    if (i >= 40) {                                                                    // Si pas de connexion au bout de 20s on sort, dans le LOOP existe un test de connexion
+    if (i >= 40) {
       break;
     }
   }
 //  Serial.println();
-  if (WiFi.status() == WL_CONNECTED) {                                                // Si on récupère les infos de connexion (c'est WiFiMulti qui choisis)
+  if (WiFi.status() == WL_CONNECTED) {
     Connexion = true;
     WiFi.setHostname(MyName.c_str());
     uint8_t mac[6];
@@ -277,19 +278,19 @@ void setup() {
 //    Serial.println(MySSID);
 //    Serial.println(MAC);
 //    Serial.println();
+    digitalWrite(LED_BUILTIN, LOW);
     digitalWrite(ledWiFi, LOW);
   } else {
-    digitalWrite(ledWiFi, LOW);
 //    Serial.println(F("Connexion WiFi ultérieur."));
   }
 
 //  Serial.print(F("Mise à l'heure "));
-  HeureOk = false;                                                                    // Si on est connecté, on peut aller chercher l'heure, sinon dans le LOOP un test de récupération se fera
+  HeureOk = false;
   udp.begin(TimePort);
   // Connexion OK, on mets l'horloge RTC à jour
   getNtpTime();
   // Récupère les paramètres du RTC
-  oldJour = now.day();                                                                // Mise à l'heure réussie ou pas on récupère les données du RTC
+  oldJour = now.day();
   oldHeure = now.hour();
   startString = String(dayShortStr(now.dayOfTheWeek())) + " " + twoDigits(now.day()) + " " + String(monthShortStr(now.month())) + " " + String(now.year()) + " " + twoDigits(now.hour()) + ":" + twoDigits(now.minute()) + ":" + twoDigits(now.second());
   if(HeureOk == false) {
@@ -304,7 +305,7 @@ void setup() {
   ftpSrv.begin(FTPuser, FTPpass);                                                     // Username, password pour le FTP.  Modifier le ports dans ESP8266FtpServer.h  (defaut 21, 50009 pour PASV)
 //  Serial.println(F("Server FTP lancé."));
 
-  server.on("/", []() {                                                               // On s'assure que même si on n'est que sur le réseau local, seul les personnes habilité puisse acceder à la baorne via le WEB
+  server.on("/", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
     loadFromSPIFFS("/index.htm");
@@ -312,15 +313,15 @@ void setup() {
   server.on("/ajaxsauve", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
-    handleSave();                                                                     // On sauvegarde via Ajax les données de la page WEB index
-    server.send(200, "text/plain", utf8ascii(F("Sauvegarde effectuée.")));
+    handleSave();
     server.sendHeader("Connection", "close");
+    server.send(200, "text/plain", utf8ascii(F("Sauvegarde effectuée.")));
   });
-  server.on("/ajaxparam", handleAjaxParam);                                           // La page WEB récupère via Ajax les données de la borne.
+  server.on("/ajaxparam", handleAjaxParam);
   server.on("/ajaxcde", handleAction);
   server.on("/ajaxlistesons", handleListeSons);
   server.on("/ajaxlisteradios", handleListeRadios);
-  server.on("/testled", []() {                                                        // Test des LEDs depuis la page WEB
+  server.on("/testled", []() {
     String argName = "";
     String argValue = "";
     if (!server.authenticate(USR_WEB, PSS_WEB))
@@ -335,7 +336,7 @@ void setup() {
     }
     server.sendHeader("Connection", "close");
   });
-  server.on("/play",  []() {                                                          // Lecture d'un des sons par la borne depuis le WEB
+  server.on("/play",  []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
 //    Serial.println(F("Commande Play Web"));
@@ -365,12 +366,12 @@ void setup() {
     handleLogFile();
     server.sendHeader("Connection", "close");
   });
-  server.on("/micro", []() {                                                          // On coupe le micro depuis le WEB, en fait on ne coupe que l'analyse
+  server.on("/micro", []() {
     Micro = !Micro;
     if (Micro == false) {
       digitalWrite(ledMicro, HIGH);
 //      Serial.println(F("Micro coupé."));
-      AudioLocalVol("micro_off", 15);
+      AudioLocalVol("micro_off", VolDef);
       server.send(200, "text/plain", F("Le micro a été désactivé."));
     } else {
       digitalWrite(ledMicro, LOW);
@@ -378,12 +379,12 @@ void setup() {
       LedVolume(Volume);
       LedMillis = millis() + 3000;
       LedReg = true;
-      AudioLocalVol("micro_on", 15);
+      AudioLocalVol("micro_on", VolDef);
       server.send(200, "text/plain", F("Le micro a été activé."));
     }
     server.sendHeader("Connection", "close");
   });
-  server.on("/heure", []() {                                                          // Forcage de la mise à l'heure depuis le WEB ne devrait jamais servir
+  server.on("/heure", []() {
     String argName = "";
     String argValue = "";
     uint8_t d, m, h, n, s;
@@ -420,24 +421,24 @@ void setup() {
     }
     server.sendHeader("Connection", "close");
   });
-  server.on("/ajaxlstradio", []() {                                                                             // Liste des radios enregistrées (web)
+  server.on("/ajaxlstradio", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
     handleRadios();
   });
-  server.on("/ajaxsauveradio", []() {                                                                           // Sauvegarde de la liste des radios (web)
+  server.on("/ajaxsauveradio", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
     handleSauveRadios();
     server.sendHeader("Connection", "close");
   });
-  server.on("/radio",  []() {                                                                                   // Lecture d'une radio sur la borne depuis la page web
+  server.on("/radio",  []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
 //    Serial.println(F("Commande Play Radio depuis le Web"));
     handleJouerRadio();
   });
-  server.on("/radiostop",  []() {                                                                               // Arrêt lecture d'une radio
+  server.on("/radiostop",  []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
 //    Serial.println(F("Commande Stop Radio depuis le Web"));
@@ -456,7 +457,7 @@ void setup() {
     server.send(200, "text/plain", webString);
     server.sendHeader("Connection", "close");
   });
-  server.on("/volume",  []() {                                                                                  // Réglage du volume de la borne (en provisoire) depuis le web
+  server.on("/volume",  []() {
     int Vol = 0;
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
@@ -474,13 +475,13 @@ void setup() {
       server.sendHeader("Connection", "close");
     }
   });
-  server.on("/ajaxlstborne", []() {                                                                               // Liste des bornes sur le réseau (lieu et IP) pour les mettre à jour en cas de modification des radios
+  server.on("/ajaxlstborne", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
 //    Serial.println(F("Liste des bornes"));
     handleBornes();
   });
-  server.on("/ajaxsauveborne", []() {                                                                             // Après une sauvegarde la borne renseignera ses soeurs et elles mettront leur fichier radios à jour.
+  server.on("/ajaxsauveborne", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
     handleSauveBornes();
@@ -488,7 +489,7 @@ void setup() {
   });
 
   /* Necessaire à la mise à jour par le WEB */
-  server.on("/firmware", HTTP_GET, []() {                                                                         // OTA via le WEB (on compile un binaire qu'on envoi)
+  server.on("/firmware", HTTP_GET, []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
       return server.requestAuthentication();
     server.sendHeader("Connection", "close");
@@ -530,11 +531,11 @@ void setup() {
     }
   });
   server.onNotFound(handleNotFound);
-  server.begin();                                                                                                 // Lancement du serveur http
+  server.begin();                                                                     // Lancement du serveur http
 //  Serial.println(F("Server WEB lancé."));
 
   // Setup I2S
-  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT); //, I2S_PIN_NO_CHANGE);                                           // Connexion à l'ampli audio avec le protocole I²S
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT); //, I2S_PIN_NO_CHANGE);
 
   // Test des LEDs
   if (TestLEDStart == true) {
@@ -543,14 +544,14 @@ void setup() {
   // Set Volume
   audio.setVolume(Volume);
   audio.forceMono(true);
-  audio.setTone(6, 6, 1);                                                                                         // Réglage de la tonalité de -40db à 6db pour chaque valeur
+  audio.setTone(6, 6, 1); // De -40db à 6db pour chaque valeur (réglage de la tonalité)
   LedVolume(Volume);
 //  Serial.print(F("Volume : "));
 //  Serial.println(Volume);
 
   // Open music file
-//  AudioLocalVol("wobble", 15);
-  AudioLocal("wobble");                                                                                           // Il y a 2 fonction pour faire jouer un mp3 sur la borne avec le volume prévu ou avec un certain volume provisoire
+//  AudioLocalVol("wobble", VolDef);
+  AudioLocal("wobble");
 //  Serial.println(DateDuJourLong() + " " + twoDigits(now.hour()) + ":" + twoDigits(now.minute()));
   digitalWrite(ledMicro, LOW);
   digitalWrite(ledEcoute, LOW);
@@ -575,7 +576,7 @@ void loop() {
   now = rtc.now();
   audio.loop();
 
-  /* Au changement de jour on force une mise à l'heure */
+  /* Changement de jour et forcer une mise à l'heure */
   if (oldJour != now.day()) {                                                         // Tous les jours à 03h03 mise à l'heure pour prise en compte de l'heure Hiver/Eté
     if (oldHeure != now.hour()) {
       if (now.hour() == 3 && now.minute() == 3) {
@@ -586,7 +587,7 @@ void loop() {
       }
     }
   }
-  if (now.second() % 10 == 0 && oldSecond != now.second()) {                          // Pour une tentative de mise à l'heure toutes les 10s, jusqu'a obtention
+  if (now.second() % 10 == 0 && oldSecond != now.second()) {                          // Pour une tentative toutes les 10s
     if (HeureOk == false) {
 //      Serial.print(F("Mise à l'heure "));
       time_t dt = getNtpTime();
@@ -605,7 +606,7 @@ void loop() {
     }
   }
   /* Gestion du son et du HandShake */
-  if (AudioState == true) {                                                           // On attend qu'un son en cours s'arrête avant d'en jouer un autre
+  if (AudioState == true) {
     if (!audio.isRunning()) {
 //      Serial.println(F("Audio stop"));
       audio.setVolume(Volume);
@@ -620,7 +621,7 @@ void loop() {
       }
     }
   }
-  /* Communication HandShake */                                                       // J'ai encore simplifié le handshake entre le NANO et l'ESP32
+  /* Communication HandShake */
   if(SerialNano.available() > 0) {                                                    // Pour dialogue avec NANO BLE Sense
     String r = "";
     while(SerialNano.available()) {
@@ -640,7 +641,7 @@ void loop() {
       if (r == "open") {
         audio.stopSong();
         HandShakeWait = true;
-        AudioLocalVol("on", 15);
+        AudioLocalVol("on", VolDef);
         SerialNano.println(F("ready"));
         HandShakeMillis = millis() + HandShakeTimeout;
 //        Serial.println(F("Prise en compte"));
@@ -665,7 +666,7 @@ void loop() {
       HandShakeWait = true;
       if (r == "open") {
         audio.stopSong();
-        AudioLocalVol("click", 12);
+        AudioLocalVol("click", VolDef);
         SerialNano.println(F("ready"));
 //        Serial.println(F("Prise en compte"));
       } else if (r != "erreur") {
@@ -679,17 +680,17 @@ void loop() {
     }
   }
   /* Timeout du HandShake */
-  if (HandShakeState == true || HandShakeWait == true) {                              // Timeout du handshake entre le NANO et l'ESP32
+  if (HandShakeState == true || HandShakeWait == true) {
     if (HandShakeMillis < millis()) {
       EnAttenteCde();
     }
   }
   /* Debug et commandes locales */
-  if(Serial.available()>0) {                                                          // Pour debug, changer le volume sonore, faire jouer un son ou un streaming depuis la fenêtre de debug
+  if(Serial.available()>0) {                                                          // Pour debug, changer le volume sonore, faire jouer un son ou un streaming
     audio.stopSong();
     String r=Serial.readString(); r.trim();
     r.toLowerCase();
-//    Serial.print(F("Recu USB: "));
+//    Serial.print(F("Recu DEBUG: "));
 //    Serial.println(r);
     if (r.startsWith("cde=")) {                                                       // Pour tester une commande (ex: "cde=object:tv,location:séjour,number:5" ou "cde=object:tv,ordre:éteint,location:séjour")
       Analyser(MotPos(r, "=", 2));
@@ -703,25 +704,28 @@ void loop() {
     }
   }
   /* Gestion de l'alarme */
-  if(Alarme == true) {                                                                // On peut demander une alarme en minute ou en heure et minute ("mets une alarme dans 12mn" ou "mets une alarme à 15:25")
+  if(Alarme == true) {
     if (HeureEnSeconde(now.hour(), now.minute(), now.second()) >= AlarmeEnSeconde) {
-      Alarme = false;
-      SupprimeAlarme();
-      AudioLocalVol("alarmeoff", 21);
-      Attend(2000);
-      AudioLocalVol("alarmeoff", 21);
+      AudioLocalVol("alarmeoff", VolDef);
+      AlarmeEnSeconde += 5;
+      if(AlarmeEtape == false) {
+        SupprimeAlarme();
+        Alarme = false;
+//        Serial.println(F("Fin de l'alarme."));
+      }
+      AlarmeEtape = false;
     }
   }
-  /* Timeout du réglage de volume sonore */                                           // Quand on règle le volume via les touches sensitives, on attend qu'il n'y ait plus d'acion pour enregsitrer
+  /* Timeout du réglage de volume sonore */
   if(VolReg == true) {
     if(VolMillis < millis()) {
-      SauveDefaut();
+      SauveValeurDefaut();
       AudioLocal("volsave");
       VolReg = false;
 //      Serial.println(F("Sauvegarde du volume"));
     }
   }
-  /* Exctinction des LEDs après timeout */                                            // Les LEDs volume s'éteignent après le réglage du volume
+  /* Exctinction des LEDs après timeout */
   if(LedReg == true) {
     if(LedMillis < millis()) {
       EraseReg();
@@ -729,7 +733,7 @@ void loop() {
 //      Serial.println(F("Exctinction des LEDs"));
     }
   }
-  /* Perte de connexion WiFi */                                                       // La perte de connexion WiFi les LEDs vont et viennent jusqu'a la connexion
+  /* Perte de connexion WiFi */
   if (WiFi.status() != WL_CONNECTED) {
     digitalWrite(ledWiFi, HIGH);
     if(LedMillis < millis()) {
@@ -762,7 +766,7 @@ void loop() {
     MySSID = WiFi.SSID();
     digitalWrite(ledWiFi, LOW);
   }
-  /* Gestion des boutons */                                                           // Gestion des touches tactiles
+  /* Gestion des boutons */
   if(digitalRead(btnPlus) == HIGH && BtnON == false) {
     Volume++;
     SetVolume(Volume);
@@ -780,24 +784,24 @@ void loop() {
     if (Micro == false) {
       digitalWrite(ledMicro, HIGH);
 //      Serial.println(F("Micro inactif."));
-      AudioLocalVol("micro_off", 15);
+      AudioLocalVol("micro_off", VolDef);
     } else {
       digitalWrite(ledMicro, LOW);
 //      Serial.println(F("Micro actif."));
       LedVolume(Volume);
       LedMillis = millis() + 3000;
       LedReg = true;
-      AudioLocalVol("micro_on", 15);
+      AudioLocalVol("micro_on", VolDef);
     }
     BtnON = true;
 //    Serial.println(F("Bouton micro"));
   }
   if (BtnON == true) {
-    BtnON = digitalRead(btnPlus) == LOW && digitalRead(btnMoins) == LOW && digitalRead(btnMicro) == LOW ? false : true; // Pour l'anti rebond
+    BtnON = digitalRead(btnPlus) == LOW && digitalRead(btnMoins) == LOW && digitalRead(btnMicro) == LOW ? false : true;
   }
 }
 
-void EnAttenteCde() {                                                                 // Réinitialisation en fin de commande en attendant la suivante
+void EnAttenteCde() {
   audio.setVolume(Volume);
   if (Micro == true) {
     AudioLocal("off");
@@ -811,12 +815,13 @@ void EnAttenteCde() {                                                           
 //  Serial.println(F("En attente Cde a été activé."));
 }
 
-void Analyser(String Chaine) {                                                        // Analyse des commandes, à ce stade encore très perfectible (nous sommes en beta)
+void Analyser(String Chaine) {
   int nbElement = NbMots(Chaine, ",");
   String Cde = "";
   String Mot1 = "";
   String Mot2 = "";
   String Unite[3];
+  uint8_t Valeur[3];
   String Couleur = "";
   String Objet = "";
   String Objet2 = "";
@@ -825,7 +830,6 @@ void Analyser(String Chaine) {                                                  
   String Prenom = "";
   String Station = "";
   String Prepos = "";
-  int Valeur[3];
 //  uint32_t Total = 0;
   unsigned Delais;
   // Initialisation des variables
@@ -850,16 +854,16 @@ void Analyser(String Chaine) {                                                  
       Local = Mot2;
       if (Mot2 == "salle de séjour" || Mot2 == "séjour" || Mot2 == "salle à manger") {
         if (Objet == "tv" || Objet == "lum" || Objet == "ventilo") {
-          Cde = "http://IP de l'objet/";                                                              // Je ne donne aucune IP pour des raisons de sécurité
+          Cde = "http://192.168.000.000/";
         }
       } else if (Mot2 == "salon") {
         if (Objet == "tv") {
-          Cde = "http://IP de l'objet/";
+          Cde = "http://192.168.000.000/";
         }
       }
 //      Serial.print(F("Local: "));
 //      Serial.println(Mot2);
-    } else if (Mot1 == "object") {                                                                    /* OBJETS */
+    } else if (Mot1 == "object") {                                                                   /* OBJETS */
       if (Mot2 == "télé" || Mot2 == "tv" || Mot2 == "télévision") {
         Objet = "tv";
       } else if (Mot2.startsWith("frig")) {
@@ -871,12 +875,12 @@ void Analyser(String Chaine) {                                                  
       } else if (Mot2.startsWith("boite") || Mot2 == "courrier") {
         Objet = "lettre";
       } else if (Mot2 == "GÉMI" || Mot2 == "serveur") {
-        Objet = "GEMI";
+        Objet = SysDomo;
       } else if (Mot2 == "adresse IP" || Mot2.startsWith("adresse")) {
         Objet = "adresse";
       } else if (Mot2 == "portail" || Mot2 == "Portillon") {
         Objet = Mot2;
-        Cde = "http://IP de l'objet/";
+        Cde = "http://192.168.000.000/";
       } else if (Mot2.startsWith("clim")) {
         Objet = "clim";
       } else if (Mot2 == "anniversaire") {
@@ -934,7 +938,7 @@ void Analyser(String Chaine) {                                                  
       Station = Mot2;
 //      Serial.print(F("Station: "));
 //      Serial.println(Station);
-    } else if (Mot1 == "preposition") {
+    } else if (Mot1 == "prepos") {
       Prepos = Mot2;
 //      Serial.print(F("Préposition: "));
 //      Serial.println(Prepos);
@@ -958,16 +962,15 @@ void Analyser(String Chaine) {                                                  
 //      Serial.println(Valeur[2]);
     }
   }
-  /* *************************************** FIN DES ANALYSES *************************************** */
-  /* ************************************* Gestion des commandes ************************************ */
-  /* MICRO D'ECOUTE */
+  /* ****************************** Fin des analyses et Préparation de l'exécution ***************************** */
+  /* Micro pour l'écoute */
   if (Ordre == "off" && Objet == "micro") {
     HandShakeMillis = millis() + HandShakeTimeout;
     Micro = false;
     Cde = "";
     digitalWrite(ledMicro, HIGH);
 //    Serial.println(F("Micro coupé."));
-    AudioLocalVol("micro_off", 15);
+    AudioLocalVol("micro_off", VolDef);
     Fait = true;
   } else if (Ordre == "on" && Objet == "micro") {
     HandShakeMillis = millis() + HandShakeTimeout;
@@ -978,10 +981,10 @@ void Analyser(String Chaine) {                                                  
     LedVolume(Volume);
     LedMillis = millis() + 3000;
     LedReg = true;
-    AudioLocalVol("micro_on", 15);
+    AudioLocalVol("micro_on", VolDef);
     Fait = true;
   }
-  /* TELEVISION */
+  /* Télévision */
   if (Objet == "tv") {
     if (Cde.indexOf("tv?ch=")<0) {
       if (Ordre == "on" || Ordre == "off") {
@@ -998,7 +1001,7 @@ void Analyser(String Chaine) {                                                  
 //    Serial.println(Cde);
     Fait = true;
   }
-  /* LUMIERES */
+  /* Lumières */
   if (Objet == "lum") {
     if (Ordre == "on") {
       Cde += "lon";
@@ -1009,9 +1012,9 @@ void Analyser(String Chaine) {                                                  
 //    Serial.println(Cde);
     Fait = true;
   }
-  /* VENTILATEUR */
+  /* Ventilateur */
   if (Objet == "ventilo") {
-    if(Cde == "") Cde = "http://IP de l'objet/";
+    if(Cde == "") Cde = "http://192.168.000.000/";
     if (Ordre == "on") {
       Cde += "von";
     } else if (Ordre == "off") {
@@ -1023,8 +1026,8 @@ void Analyser(String Chaine) {                                                  
   }
   /* Courrier */
   if (Objet == "lettre") {
-    Cde = "http://IP de l'objet/google";                                                              // Ma boite aux lettres (elle envoie d'elle même un
-//    Serial.print(F("Courrier: "));                                                                  // Mais peut aussi être interrogée
+    Cde = "http://192.168.000.000/URI";
+//    Serial.print(F("Courrier: "));
 //    Serial.println(Cde);
     Fait = true;
   }
@@ -1036,7 +1039,7 @@ void Analyser(String Chaine) {                                                  
     AudioHost(MyIP);
     Fait = true;
   }
-  /* RADIO */
+  /* Radios */
   if (Objet == "radio") {
     if (Ordre == "on") {
       if (Station == "") {
@@ -1054,7 +1057,7 @@ void Analyser(String Chaine) {                                                  
         if(nStation != 0) {
           if (nStation != NumStation) {
             NumStation = nStation;
-            SauveDefaut();
+            SauveValeurDefaut();
           }
           AudioHost("voici la radio " + GetNameStation(NumStation));
           Delais = millis() + 8000;
@@ -1089,7 +1092,7 @@ void Analyser(String Chaine) {                                                  
     SetVolume(Volume);
     Fait = true;
   }
-  /* PORTAIL */
+  /* Portail */
   if (Objet.startsWith("port")) {
     if (Ordre == "on") {
       if (Objet == "portillon") Cde += "ouvrevent";
@@ -1110,47 +1113,101 @@ void Analyser(String Chaine) {                                                  
     AudioHost("nous sommes le " + DateDuJourLong());
     Fait = true;
   }
-  /* ALARME */
-  if (Objet == "alarme") {
+  /* Alarmes */
+  if (Objet == "alarme") {                                                                            // IMPORTANT: dans cette partie de la fonction, Valeur[0) contient toujours l'heure, Valeur[1] toujours les minutes etc.
+//    Serial.println();
+//    Serial.print(F("Ordre: "));
+//    Serial.println(Ordre);
+//    Serial.print(F("Prepos: "));
+//    Serial.println(Prepos);
+//    Serial.println();
+//    for(int i=0; i<3; i++) {
+//      Serial.print(F("Unite["));
+//      Serial.print(i);
+//      Serial.print(F("]: "));
+//      Serial.println(Unite[i]);
+//      Serial.print(F("Valeur["));
+//      Serial.print(i);
+//      Serial.print(F("]: "));
+//      Serial.println(Valeur[i]);
+//    }
+//    Serial.println();
+//    Serial.print(F("Heure Actuelle: "));
+//    Serial.println(HeureEnSeconde(now.hour(), now.minute(), now.second()));
+//    Serial.println();
     if (Ordre == "on" || Ordre == "plus") {
-      if (Prepos == "à" || Prepos == "pour") {
-        if (Valeur[0] != 0 && Unite[0] == "heure") {
-          if (Valeur[1] != 0 && (Unite[1] == "minute" || Unite[1] == "")) {
-            if (Valeur[2] == 0) Valeur[2] = now.second();
-            AlarmeEnSeconde = HeureEnSeconde(Valeur[0], Valeur[1], Valeur[0]);
+      if (Prepos == "à" || Prepos == "pour") {                                                        // Pour mettre une alarme à une certaine heure (ex: mets une alarme à 10h15")
+//        Serial.println(F("Alarme à une heure précise"));
+        if (Valeur[0] != 0 && Unite[0].startsWith("heure")) {
+          if (Valeur[1] != 0 && (Unite[1].startsWith("minute") || Unite[1] == "")) {                  // On donne des heures et des minutes (en précisant le mot minute ou pas)
+            if (Valeur[2] == 0) Valeur[2] = now.second();                                             // Là c'est au choix, on met les secondes pour secondes sinon on met en REM
+            AlarmeEnSeconde = HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);                        // Déclenchement à la seconde près
             Alarme = true;
-            EcrireAlarme();
-            Cde = "";
-            AudioLocalVol("alarmeon", 15);
+            EcrireAlarme();                                                                           // On sauvegarde l'alarme, en cas de reboot celle-ci court toujours (fichier lu au démarrage)
+            AudioLocalVol("alarmeon", VolDef);                                                        // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+            AlarmeEtape = true;
             Fait = true;
+            Cde = "";
           }
         }
-      } else {
-        if (Valeur[0] != 0 && Unite[0] == "heure") {
-          if (Valeur[1] != 0 && (Unite[1] == "seconde")) {
-            Valeur[2] = Valeur[1];
-            Valeur[1] = now.minute();
+//        Serial.print(F("Alarme heure fixe: "));
+//        Serial.println(AlarmeEnSeconde);
+      } else {                                                                                        // Pour mettre une alarme dans un certain temps
+//        Serial.println(F("Alarme après un certain temps"));
+        if (Valeur[0] != 0 && Unite[0].startsWith("heure")) {                                         // On précise les heures et minutes à partir de l'heure courante
+          if (Valeur[1] != 0 && (Unite[1].startsWith("minute"))) {
+            if (Valeur[2] == 0) Valeur[2] = now.second();                                             // Là c'est au choix, on met les secondes pour secondes si elles n'ont pas été précisées, sinon on met en REM
           }
-          if (Valeur[1] == 0) Valeur[1] = now.minute();
-          if (Valeur[2] == 0) Valeur[2] = now.second();
           AlarmeEnSeconde = HeureEnSeconde(now.hour(), now.minute(), now.second()) + HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);
           Alarme = true;
+          AlarmeEtape = true;
           EcrireAlarme();
-          Cde = "";
-          AudioLocalVol("alarmeon", 15);
+          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Fait = true;
-        } else if (Valeur[0] != 0 && (Unite[0] == "minute")) {
+          Cde = "";
+//          Serial.print(F("Alarme après HM: "));
+//          Serial.println(AlarmeEnSeconde);
+        } else if (Valeur[0] != 0 && Unite[0].startsWith("heure")) {                                  // Pour mettre une alarme dans un certain temps (ex: "mets une alarme dans 1h30s" sans précision des minutes)
+          if (Valeur[1] != 0 && (Unite[1].startsWith("seconde"))) {
+            Valeur[2] = Valeur[1];
+            Valeur[1] = 0;
+          }
+          AlarmeEnSeconde = HeureEnSeconde(now.hour(), now.minute(), now.second()) + HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);
+          Alarme = true;
+          AlarmeEtape = true;
+          EcrireAlarme();
+          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          Fait = true;
+          Cde = "";
+//          Serial.print(F("Alarme après HS: "));
+//          Serial.println(AlarmeEnSeconde);
+        } else if (Valeur[0] != 0 && (Unite[0].startsWith("minute"))) {                               // On donne le temps en minutes et optionnellement en secondes
           Valeur[2] = Valeur[1];
           Valeur[1] = Valeur[0];
           Valeur[0] = 0;
-          if (Valeur[2] == 0) Valeur[2] = now.second();
           AlarmeEnSeconde = HeureEnSeconde(now.hour(), now.minute(), now.second()) + HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);
           Alarme = true;
+          AlarmeEtape = true;
           EcrireAlarme();
+          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Cde = "";
-          AudioLocalVol("alarmeon", 15);
+//          Serial.print(F("Alarme après MS: "));
+//          Serial.println(AlarmeEnSeconde);
+        } else if (Valeur[0] != 0 && (Unite[0].startsWith("seconde"))) {                              // On donne le temps seulement en secondes
+          Valeur[2] = Valeur[0];
+          Valeur[1] = 0;
+          Valeur[0] = 0;
+          AlarmeEnSeconde = HeureEnSeconde(now.hour(), now.minute(), now.second()) + HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);
+          Alarme = true;
+          AlarmeEtape = true;
+          EcrireAlarme();
+          AudioLocalVol("alarmeon", VolDef);                                                              // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          Cde = "";
+//          Serial.print(F("Alarme après S: "));
+//          Serial.println(AlarmeEnSeconde);
         }
       }
+//      Serial.println();
     } else if (Ordre == "moins") {
       Cde = "";
       Alarme = false;
@@ -1158,8 +1215,6 @@ void Analyser(String Chaine) {                                                  
       audio.setVolume(Volume);
       AudioLocal("almsuppr");
     }
-//    Serial.print(F("Alarme: "));
-//    Serial.println(AlarmeEnSeconde);
     Fait = true;
   }
   if (Cde != "") {
@@ -1169,12 +1224,12 @@ void Analyser(String Chaine) {                                                  
   }
 //  if (Fait == false) {
 //    Serial.println(F("Fait = false"));
-//    AudioLocalVol("erreur", 15);
+//    AudioLocalVol("erreur", VolDef);
 //    Fait = true;
 //  }
 }
 
-void Execute(String Cde) {                                                                            // Execution des commandes (là encore c'est perfectible)
+void Execute(String Cde) {
 //  Serial.print(F("Commande à passer: "));
 //  Serial.println(Cde);
   String Reponse;
@@ -1199,7 +1254,7 @@ void Execute(String Cde) {                                                      
 //  Serial.println(Reponse);
 }
 
-String InterroHTTP(String Site) {                                                                     // Execution par URL des commandes (là encore c'est perfectible)
+String InterroHTTP(String Site) {
   String Ligne = "";
   String URL = Site.substring(0, Site.indexOf("/", 9));
   String URI = Site.substring(Site.indexOf("/", 9));
@@ -1247,7 +1302,7 @@ String InterroHTTP(String Site) {                                               
   return(Ligne);
 }
 
-void AudioLocal(String sFile) {                                                                       // Le mp3 est lu avec le volume réglé par vous
+void AudioLocal(String sFile) {
   unsigned long AudioTimeOut = millis() + 8000;
   if (AudioState == true) {
     while(audio.isRunning()) {
@@ -1265,7 +1320,7 @@ void AudioLocal(String sFile) {                                                 
 //  Serial.println(sFile);
 }
 
-void AudioLocalVol(String sFile, int Vol) {                                                           // Le mp3 est lu avec le volume réglé juste pour cette lecture
+void AudioLocalVol(String sFile, int Vol) {
   unsigned long AudioTimeOut = millis() + 8000;
   if (AudioState == true) {
     while(audio.isRunning()) {
@@ -1284,7 +1339,7 @@ void AudioLocalVol(String sFile, int Vol) {                                     
 //  Serial.println(sFile);
 }
 
-void AudioHost(String URL) {                                                                          // Le mp3 ou la radio sont lu en streaming
+void AudioHost(String URL) {
   if (!URL.startsWith("http")) URL = VoiceRss + URL;
   audio.stopSong();
   audio.connecttohost(URL.c_str());
@@ -1294,7 +1349,7 @@ void AudioHost(String URL) {                                                    
 //  Serial.println(URL);
 }
 
-String GetNameStation(byte nSt) {                                                                     // Recherche de la sation radio, juste avec son numéro d'enregistrement
+String GetNameStation(byte nSt) {
   String Lg = "";
   String St = "";
   char Car;
@@ -1322,7 +1377,7 @@ String GetNameStation(byte nSt) {                                               
   return St;
 }
 
-String GetURLRadio(byte nSt) {                                                                        // Recherche l'URL de la sation radio, juste avec son numéro d'enregistrement
+String GetURLRadio(byte nSt) {
   String Lg = "";
   byte N = 0;
   String St = "";
@@ -1351,7 +1406,7 @@ String GetURLRadio(byte nSt) {                                                  
   return URLRadio;
 }
 
-byte GetNumStation(String nSt) {                                                                      // Recherche du numéro de la sation juste avec son nom
+byte GetNumStation(String nSt) {
   String Lg = "";
   byte N = 0;
   String St = "";
@@ -1385,7 +1440,7 @@ byte GetNumStation(String nSt) {                                                
   return N;
 }
 
-int GetMP3List(fs::FS &fs, const char *dirname, uint8_t levels, String mp3list[30], String mp3size[30]) { // Liste les fichiers mp3 dans le SPIFFS
+int GetMP3List(fs::FS &fs, const char *dirname, uint8_t levels, String mp3list[30], String mp3size[30]) {
 //  Serial.printf("Listing directory: %s\n", dirname);
   int i = 0;
 
@@ -1418,7 +1473,7 @@ int GetMP3List(fs::FS &fs, const char *dirname, uint8_t levels, String mp3list[3
   return i;
 }
 
-void SetVolume(int Valeur) {                                                                          // Réglage du volume sonore de la borne
+void SetVolume(int Valeur) {
   if (Valeur < 6) {
     Valeur = 6;
     LedVolume(Valeur);
@@ -1443,11 +1498,11 @@ void SetVolume(int Valeur) {                                                    
 //  Serial.println(Valeur);
 }
 
-void SetVolumeWeb(int Valeur) {                                                                       // Réglage du volume sonore provisoire de la borne depuis la page WEB
+void SetVolumeWeb(int Valeur) {
   if (Valeur < 6) {
     Valeur = 6;
     LedVolume(Valeur);
-    AudioLocalVol("volmin", 15);
+    AudioLocalVol("volmin", VolDef);
 //    Serial.print(F("Volume: "));
 //    Serial.println(Valeur);
     return;
@@ -1455,7 +1510,7 @@ void SetVolumeWeb(int Valeur) {                                                 
   if (Valeur > 21) {
     Valeur = 21;
     LedVolume(Valeur);
-    AudioLocalVol("volmax", 15);
+    AudioLocalVol("volmax", VolDef);
 //    Serial.print(F("Volume: "));
 //    Serial.println(Valeur);
     return;
@@ -1466,7 +1521,7 @@ void SetVolumeWeb(int Valeur) {                                                 
 //  Serial.println(Valeur);
 }
 
-void LedVolume(int Valeur) {                                                                          // Enregistrement dans les variables pour allumage des LEDs volume
+void LedVolume(int Valeur) {
   EraseReg();
   int V = (Valeur - 5) / 2;
 //  Serial.print(F("V = "));
@@ -1484,7 +1539,7 @@ void LedVolume(int Valeur) {                                                    
   LedReg = true;
 }
 
-void WriteReg() {                                                                                     // Ecriture dans le registre à décalage (74HC595 ou 74LS595) pour les LEDs volume
+void WriteReg() {
   digitalWrite(bgLatch, LOW);
   for (int i=7; i>=0; i--) {
     digitalWrite(bgClock, LOW);
@@ -1494,7 +1549,7 @@ void WriteReg() {                                                               
   digitalWrite(bgLatch, HIGH);
 }
 
-void MakeReg(int V) {                                                                                 // Allumage d'une LED en particulier
+void MakeReg(int V) {
   EraseReg();
   for (int i=0; i<8; i++) {
     if (V & int(pow(2, i))) {
@@ -1504,7 +1559,7 @@ void MakeReg(int V) {                                                           
   WriteReg();
 }
 
-void EraseReg() {                                                                                     // Extinction de toutes les LEDs volume
+void EraseReg() {
   for (int i=0; i<8; i++) {
     bgReg[i] = LOW;
   }
@@ -1516,7 +1571,7 @@ void EraseReg() {                                                               
   }
 }
 
-String TestLED(int ld) {                                                                              // Test de fonctionnement des des LEDs depuis le WEB (unitairement ou toutes à la suite)
+String TestLED(int ld) {
 //    Serial.println(F("Début du test LED"));
   if (ld == -1) {
     digitalWrite(ledMicro, LOW);
@@ -1577,7 +1632,7 @@ String TestLED(int ld) {                                                        
    -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Horloge Interne -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
    -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-
 */
-String twoDigits(int digits) {                                                                        // Fonction utilisé pour l'affichage des digits sur 2 caractères. Ajoute 0 devant pour 0 à 9 rien au dessus
+String twoDigits(int digits) {                                                                                              // Fonction utilitaire pour l'affichage de l'horloge numérique: imprime en tête 0 si necessaire
   if (digits < 10) {
     String i = '0' + String(digits);
     return i;
@@ -1586,9 +1641,9 @@ String twoDigits(int digits) {                                                  
   }
 }
 
-bool isSummerTime (int an, byte mois, byte jour, byte heure, byte tzHours) {                          // paramètres d'entrée: "heure normale" pour l'année, le mois, le jour, l'heure et les heures (0 = UTC, 1 = MEZ)
-  if ((mois < 3) || (mois > 10)) return false;                                                        // Pas d'heure d'été en janvier, février, novembre, décembre
-  if ((mois > 3) && (mois < 10)) return true;                                                         // Heure d'été en avril, mai, juin, juil, aout, sept
+bool isSummerTime (int an, byte mois, byte jour, byte heure, byte tzHours) {                                                // paramètres d'entrée: "heure normale" pour l'année, le mois, le jour, l'heure et les heures (0 = UTC, 1 = MEZ)
+  if ((mois < 3) || (mois > 10)) return false;                                                                              // Pas d'heure d'été en janvier, février, novembre, décembre
+  if ((mois > 3) && (mois < 10)) return true;                                                                               // Heure d'été en avril, mai, juin, juil, aout, sept
   if (mois == 3 && (mois + 24 * jour) >= (1 + tzHours + 24 * (31 - (5 * an / 4 + 4) % 7)) || mois == 10 && (heure + 24 * jour) < (1 + tzHours + 24 * (31 - (5 * an / 4 + 1) % 7))) {
     return true;
   } else {
@@ -1603,7 +1658,7 @@ time_t getNtpTime() {
 
   if (MaHenCours) return 0;
   MaHenCours = true;
-  while (udp.parsePacket() > 0) ;                                                                     // Supprimer tous les paquets précédemment reçus
+  while (udp.parsePacket() > 0) ;                                                                                           // Supprimer tous les paquets précédemment reçus
 
   sendNTPpacket(TimeServer);
 
@@ -1611,7 +1666,7 @@ time_t getNtpTime() {
   while (millis() - beginWait < 1500) {
     int size = udp.parsePacket();
     if (size >= NTP_PACKET_SIZE) {
-      udp.read(packetBuffer, NTP_PACKET_SIZE);                                                        // Lire le paquet dans le tampon
+      udp.read(packetBuffer, NTP_PACKET_SIZE);                                                                              // Lire le paquet dans le tampon
       unsigned long secsSince1900;
       // Convertir quatre octets commençant à l'emplacement 40 en un entier long
       secsSince1900 =  (unsigned long)packetBuffer[40] << 24;
@@ -1637,7 +1692,7 @@ time_t getNtpTime() {
   }
 //  Serial.println(F("--- Mise à l'heure impossible ---"));
   MaHenCours = false;
-  return 0;                                                                                           // Renvoie 0 si impossible d'obtenir l'heure
+  return 0;                                                                                                                 // Renvoie 0 si impossible d'obtenir l'heure
 }
 
 // Envoyer une requête au serveur NTP de temps à l'adresse indiquée
@@ -1646,10 +1701,10 @@ void sendNTPpacket(IPAddress &adresse) {
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
 // Initialiser les valeurs nécessaires pour former la requête NTP
 // (Voir l'URL ci-dessus pour plus de détails sur les paquets)
-  packetBuffer[0] = 0b11100011;                                                                       // LI, Version, Mode
-  packetBuffer[1] = 0;                                                                                // Strate, ou type d'horloge
-  packetBuffer[2] = 6;                                                                                // Intervalle d'interrogation
-  packetBuffer[3] = 0xEC;                                                                             // Précision de l'horloge par les pairs
+  packetBuffer[0] = 0b11100011;                                                                                             // LI, Version, Mode
+  packetBuffer[1] = 0;                                                                                                      // Strate, ou type d'horloge
+  packetBuffer[2] = 6;                                                                                                      // Intervalle d'interrogation
+  packetBuffer[3] = 0xEC;                                                                                                   // Précision de l'horloge par les pairs
   // 8 octets de zéro pour Root Delay & Root Dispersion
   packetBuffer[12]  = 49;
   packetBuffer[13]  = 0x4E;
@@ -1657,13 +1712,13 @@ void sendNTPpacket(IPAddress &adresse) {
   packetBuffer[15]  = 52;
   // Tous les champs NTP ont reçu des valeurs, vous pouvez
   // maintenant envoyer un paquet demandant un horodatage :
-  udp.beginPacket(adresse, 123);                                                                      // Les requêtes NTP sont destinées au port 123 normalement.
+  udp.beginPacket(adresse, 123);                                                                                            // Les requêtes NTP sont destinées au port 123 normalement.
   udp.write(packetBuffer, NTP_PACKET_SIZE);
   udp.endPacket();
 }
 
-void DateTimeSet(uint8_t d, uint8_t m, uint16_t y, uint8_t h, uint8_t n, uint8_t s) {                 // données pour mettre à l'heure l'horloge
-  rtc.adjust(DateTime(y, m, d, h, n, s));                                                             // mise à l'heure de l'horloge
+void DateTimeSet(uint8_t d, uint8_t m, uint16_t y, uint8_t h, uint8_t n, uint8_t s) {                                       // données pour mettre à l'heure l'horloge
+  rtc.adjust(DateTime(y, m, d, h, n, s));                                                                                   // mise à l'heure de l'horloge
 }
 
 uint32_t HeureEnSeconde(byte H, byte M, byte S) {
@@ -1682,7 +1737,7 @@ String DateDuJourLong() {
   return(DateDuJour);
 }
 
-void LireAlarme() {                                                                                   // Lecture du fichier de l'alarme programmée en cas de reboot
+void LireAlarme() {
   if (SPIFFS.exists("/Alarme.txt")) {
     File file = SPIFFS.open("/Alarme.txt", "r");
     if (file) {
@@ -1708,29 +1763,30 @@ void SupprimeAlarme() {
   if (SPIFFS.exists("/Alarme.txt")) SPIFFS.remove("/Alarme.txt");
 }
 
-void LireDefaut() {
+void LireValeurDefaut() {
   String Chaine = "";
   if (SPIFFS.exists("/defaut.txt")) {
-    File dataFile = SPIFFS.open("/defaut.txt", "r");                                                  // Ouverture fichier pour le lire
+    File dataFile = SPIFFS.open("/defaut.txt", "r");                                                                        // Ouverture fichier pour le lire
     for (int i = 0; i < dataFile.size(); i++) {
-      Chaine += (char)dataFile.read();                                                                // Lit le fichier
+      Chaine += (char)dataFile.read();                                                                                      // Lit le fichier
     }
     //    Serial.println(alm);
     dataFile.close();
-    if (NbMots(Chaine, ";") != 4) {
-      CreerDefaut();
+    if (NbMots(Chaine, ";") != 5) {
+      CreerValeurDefaut();
     } else {
-      Volume = MotPos(Chaine, ";", 1).toInt();
-      NumStation = MotPos(Chaine, ";", 2).toInt();
-      NbreRadios = MotPos(Chaine, ";", 3).toInt();
-      NbreBornes = MotPos(Chaine, ";", 4).toInt();
+      VolDef = MotPos(Chaine, ";", 1).toInt();
+      Volume = MotPos(Chaine, ";", 2).toInt();
+      NumStation = MotPos(Chaine, ";", 3).toInt();
+      NbreRadios = MotPos(Chaine, ";", 4).toInt();
+      NbreBornes = MotPos(Chaine, ";", 5).toInt();
     }
   } else {
-    CreerDefaut();
+    CreerValeurDefaut();
   }
 }
 
-void CreerDefaut() {
+void CreerValeurDefaut() {
   int idxStations = 0;
   int idxBornes = 0;
   char Car;
@@ -1738,16 +1794,17 @@ void CreerDefaut() {
   bool Ajuster = false;
 
   if (SPIFFS.exists("/defaut.txt")) {
-    File dataFile = SPIFFS.open("/defaut.txt", "r");                                                  // Ouverture fichier pour le lire
+    File dataFile = SPIFFS.open("/defaut.txt", "r");                                                                        // Ouverture fichier pour le lire
     for (int i = 0; i < dataFile.size(); i++) {
-      Ligne += (char)dataFile.read();                                                                 // Lit le fichier
+      Ligne += (char)dataFile.read();                                                                                      // Lit le fichier
     }
     //    Serial.println(alm);
     dataFile.close();
-    Volume = MotPos(Ligne, ";", 1).toInt();
-    NumStation = MotPos(Ligne, ";", 2).toInt();
-    NbreRadios = MotPos(Ligne, ";", 3).toInt();
-    NbreBornes = MotPos(Ligne, ";", 4).toInt();
+    VolDef = MotPos(Ligne, ";", 1).toInt();
+    Volume = MotPos(Ligne, ";", 2).toInt();
+    NumStation = MotPos(Ligne, ";", 3).toInt();
+    NbreRadios = MotPos(Ligne, ";", 4).toInt();
+    NbreBornes = MotPos(Ligne, ";", 5).toInt();
 
     if (SPIFFS.exists("/radios.lst")) {
       File fic = SPIFFS.open("/radios.lst", "r");
@@ -1793,28 +1850,28 @@ void CreerDefaut() {
     Ajuster = true;
   }
   if (Volume < 6 || Volume > 21) {
-    Volume = 10;
+    Volume = 15;
     Ajuster = true;
   }
   if (NumStation < 1 || NumStation > NbreRadios) {
     NumStation = 1;
     Ajuster = true;
   }
-  if (Ajuster == true) SauveDefaut();
+  if (Ajuster == true) SauveValeurDefaut();
 }
 
-void SauveDefaut() {
-  String Ligne = String(Volume) + ";" + String(NumStation) + ";" + NbreRadios + ";" + NbreBornes;
+void SauveValeurDefaut() {
+  String Ligne = String(VolDef) + ";" + String(Volume) + ";" + String(NumStation) + ";" + NbreRadios + ";" + NbreBornes;
   if (SPIFFS.exists("/defaut.txt")) {
-    if (SPIFFS.exists("/defaut.old")) SPIFFS.remove("/defaut.old");                                   // On peut revenir en arrière par FTP
+    if (SPIFFS.exists("/defaut.old")) SPIFFS.remove("/defaut.old");
     SPIFFS.rename("/defaut.txt", "/defaut.old");
   }
-  File dataFile = SPIFFS.open("/defaut.txt", "w");                                                    // Ouverture fichier pour l'écriture
+  File dataFile = SPIFFS.open("/defaut.txt", "w");                                                                          // Ouverture fichier pour l'écriture
   dataFile.println(Ligne);
   dataFile.close();
 }
 
-bool LireConfig() {                                                                                   // Fichier de paramétrage
+bool LireConfig() {
   String Lg = "";
   String Key = "";
   String Val = "";
@@ -1900,6 +1957,10 @@ bool LireConfig() {                                                             
             TempOffSet = Val.toFloat();
           } else if(Key == "TestLEDStart") {
             TestLEDStart = Val == "1" ? true : false;
+//          } else if(Key == "voldef") {
+//            VolDef = Val.toInt();
+//          } else if(Key == "volume") {
+//            Volume = Val.toInt();
           }
         }
       }
@@ -1910,6 +1971,7 @@ bool LireConfig() {                                                             
     }
   } else {
     SauveConfig();
+    SauveValeurDefaut();
     SauveConfigLog();
     return(true);
   }
@@ -1918,7 +1980,7 @@ bool LireConfig() {                                                             
 bool SauveConfig() {
   String Val = "";
   if (SPIFFS.exists("/config.ini")) SPIFFS.remove("/config.ini");
-  File myFile = SPIFFS.open("/config.ini", "w");                                                      // Ouvre le fichier en écriture NB: le fichier est créé si il n'existe pas !
+  File myFile = SPIFFS.open("/config.ini", "w");                                                                               // ouvre le fichier en écriture NB : le fichier est créé si il n'existe pas !
   if (myFile) {
     myFile.print(F("Name="));
     myFile.println(MyName);
@@ -1981,6 +2043,10 @@ bool SauveConfig() {
     myFile.print(F("TestLEDStart="));
     Val = TestLEDStart == true ? "1" : "0";
     myFile.println(Val);
+//    myFile.print(F("VolDef="));
+//    myFile.println(VolDef);
+//    myFile.print(F("Volume="));
+//    myFile.println(Volume);
 
     myFile.println();
     myFile.print(F("Sauvegarde="));
@@ -1995,7 +2061,7 @@ bool SauveConfig() {
 void SauveConfigLog() {
   DateTime now = rtc.now();
 
-  if(HeureOk == true) {                                                                               // On prend le mois en cours si l'heure a été mise à jour, sinon LogMois = le mois précédemment enregistré dans le fichier qui est lu au démarrage.
+  if(HeureOk == true) {                                                                                                     // On prend le mois en cours si l'heure a été mise à jour, sinon LogMois = le mois précédemment enregistré dans le fichier qui est lu au démarrage.
     LogMois = now.month();
   }
   String bLog = Log == true ? "1" : "0";
@@ -2061,9 +2127,9 @@ void LireConfigLog() {
         /* Cherche l'emplacement de la clef en ignorant les espaces et les tabulations en début de ligne */
         i = 0;
         while (buffer[i] == ' ' || buffer[i] == '\t') {
-          if (++i == buffer_lenght) break;                                                            // Ignore les lignes contenant uniquement des espaces et/ou des tabulations
+          if (++i == buffer_lenght) break; // Ignore les lignes contenant uniquement des espaces et/ou des tabulations
         }
-        if (i == buffer_lenght) continue;                                                             // Gère les lignes contenant uniquement des espaces et/ou des tabulations
+        if (i == buffer_lenght) continue; // Gère les lignes contenant uniquement des espaces et/ou des tabulations
         key = &buffer[i];
 
         /* Cherche l'emplacement du séparateur = en ignorant les espaces et les tabulations après la clef */
@@ -2184,7 +2250,7 @@ bool loadFromSPIFFS(String path) {
 }
 
 bool handleSave() {
-  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                           // Au moins un argument doit être fourni
+  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   String argName = "";
   String argValue = "";
 
@@ -2201,7 +2267,7 @@ bool handleSave() {
       ipAdresse = StrToIP(argValue);
     }
     if (argName == "nom") {
-      MyName = "GEMI_" + argValue;
+      MyName = SysDomo + "_" + argValue;
     }
     if (argName == "ipgw") {
       gateway = StrToIP(argValue);
@@ -2289,8 +2355,15 @@ bool handleSave() {
     if (argName == "testled") {
       TestLEDStart = argValue.toInt() == 1 ? true : false;
     }
+    if (argName == "voldef") {
+      VolDef = argValue.toInt();
+    }
+    if (argName == "volume") {
+      Volume = argValue.toInt();
+    }
   }
   SauveConfig();
+  SauveValeurDefaut();
   SauveConfigLog();
   webString = F("La sauvegarde a été effectuée.\nCes nouvelles données sont dès à présent prisent en compte.\r\n\r\n");
   server.send(200, "text/html", webString);
@@ -2298,25 +2371,26 @@ bool handleSave() {
 }
 
 void handleAjaxParam() {
-  String bHEH = hEteHiver == true ? "1" : "0";                                                        // Heure été / hiver
-  String bEH  = EteHiver == true ? "1" : "0";                                                         // Garder heure été ou hiver si pas de changement
+  String bHEH = hEteHiver == true ? "1" : "0";                                                                              // Heure été / hiver
+  String bEH  = EteHiver == true ? "1" : "0";                                                                               // Garder heure été ou hiver si pas de changement
   String bLOG = Log == true ? "1" : "0";
   String tLED = TestLEDStart == true ? "1" : "0";
   String bNom = MotPos(MyName, "_", 2);
   MySSID = WiFi.SSID();
   MyIP = String(ipAdresse[0]) + "." + String(ipAdresse[1]) + "." + String(ipAdresse[2]) + "." + String(ipAdresse[3]);
 
-  webString = MyIP + "," + bNom + "," + IPtoString(gateway) + "," + IPtoString(dns) + "," + IPtoString(subnet) + "," + IPtoString(TimeServer) + ","; // 6 > 0 à 5
-  webString += String(TimePort) + "," + String(TimeZone) + "," + String(USR_WEB) + "," + String(PSS_WEB) + ","; // 4 => 6 à 9
-  webString += ssid1 + "," + pass1 + "," + ssid2 + "," + pass2 + "," + ssid3 + "," + pass3 + "," + ssid4 + "," + pass4 + ","; // 8 => 10 à 17
-  webString += VoiceRss + "," + UID_Nano + "," + Access_Key + "," + String(TempOffSet) + "," + bHEH + "," + bEH + ","; // 4 => 18 à 21
-  webString += FTPuser + "," + FTPpass + "," + OTApass + "," + String(HandShakeTimeout) + "," + bLOG + ","; // 5 => 22 à 26
-  webString += MyIP + " - " + MAC + " - Ver. " + String(Version) + "," + MySSID + " - " + MotPos(MyName, "_", 2) + "," + tLED; // 2 => 27 à 29
+  webString = MyIP + "," + MyName + "," + IPtoString(gateway) + "," + IPtoString(dns) + "," + IPtoString(subnet) + "," + IPtoString(TimeServer) + ",";
+  webString += String(TimePort) + "," + String(TimeZone) + "," + String(USR_WEB) + "," + String(PSS_WEB) + ",";
+  webString += ssid1 + "," + pass1 + "," + ssid2 + "," + pass2 + "," + ssid3 + "," + pass3 + "," + ssid4 + "," + pass4 + ",";
+  webString += VoiceRss + "," + UID_Nano + "," + Access_Key + "," + String(TempOffSet) + "," + bHEH + "," + bEH + ",";
+  webString += FTPuser + "," + FTPpass + "," + OTApass + "," + String(HandShakeTimeout) + "," + bLOG + ",";
+  webString += MyIP + " - " + MAC + " - Ver. " + String(Version) + "," + MySSID + " - " + bNom + "," + tLED + ",";
+  webString += String(VolDef) + "," + String(Volume);
   server.send(200, "text/html", webString);
 }
 
 bool handleAction() {
-  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                           // Au moins un argument doit être fourni
+  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   String argName = "";
   String argValue = "";
 
@@ -2341,7 +2415,7 @@ bool handleAction() {
   return true;
 }
 
-void handleFichier(char *Fichier) {                                                                   // Pour l'affiche des fichiers texte comme "config.ini"
+void handleFichier(char *Fichier) {
   webString = F("<!DOCTYPE html><html><head>\n");
   webString += F("<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=UTF-8\"/>\n");
   webString += F("<meta http-equiv=\"Content-language\" content=\"fr\"/>\n");
@@ -2349,7 +2423,9 @@ void handleFichier(char *Fichier) {                                             
   webString += F("<meta http-equiv=\"Cache-Control\" content=\"no-cache\"/>\n");
   webString += F("<meta http-equiv=\"Content-Style-Type\" content=\"text/css\"/>\n");
   webString += F("<meta http-equiv=\"Content-Script-Type\" content=\"text/javascript\"/>\n");
-  webString += F("<meta name=\"Description\" content=\"Borne GEMI: ");
+  webString += F("<meta name=\"Description\" content=\"Borne ");
+  webString += SysDomo;
+  webString += F(": ");
   webString += String(Fichier).substring(1);
   webString += F("\"/>\n");
   webString += F("<meta name=\"Author\" content=\"Jean-Luc NAPOLITANO\"/>\n");
@@ -2358,7 +2434,9 @@ void handleFichier(char *Fichier) {                                             
   webString += F("<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n");
   webString += F("<link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\"/>\n");
   webString += F("<link rel=\"apple-touch-icon\" href=\"/favicon.png\"/>\n");
-  webString += F("<title>Borne GEMI</title>\n");
+  webString += F("<title>Borne ");
+  webString += SysDomo;
+  webString += F("</title>\n");
   webString += F("</head>\n");
   webString += F("<body style='text-align:center;'>\n");
   webString += F("<strong><font size='14px' color='blue'>Fichier: ");
@@ -2397,7 +2475,7 @@ void handleFichier(char *Fichier) {                                             
   server.sendContent(webString);
 }
 
-void handleRadios() {                                                                                 // Liste des stations de radios envoyée par Ajax
+void handleRadios() {
   String num = "";
   String nom = "";
   String lien = "";
@@ -2474,7 +2552,7 @@ void handleRadios() {                                                           
       }
       fic.close();
       webString = "</table>\n";
-      webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2);
+      webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2) + "*" + MotPos(MyName, "_", 1);
       server.sendContent(webString);
     } else {
       webString = F("Impossible d'ouvrir le fichier \"radios.lst\".");
@@ -2487,7 +2565,7 @@ void handleRadios() {                                                           
   server.sendHeader("Connection", "close");
 }
 
-bool handleSauveRadios() {                                                                            // Sauvegarde des stations de radios
+bool handleSauveRadios() {
   if (server.args() == 0) {
     return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   }
@@ -2500,7 +2578,7 @@ bool handleSauveRadios() {                                                      
 
 
   if (SPIFFS.exists("/radios.old")) SPIFFS.remove("/radios.old");
-  if (SPIFFS.exists("/radios.lst")) SPIFFS.rename("/radios.lst", "/radios.old");                      // Retour arrière avec FTP
+  if (SPIFFS.exists("/radios.lst")) SPIFFS.rename("/radios.lst", "/radios.old");
   File fic = SPIFFS.open("/radios.lst", "w");
   if (fic) {
     for (uint8_t i=0; i<server.args(); i++) {
@@ -2528,7 +2606,7 @@ bool handleSauveRadios() {                                                      
       }
     }
     fic.close();
-    SauveDefaut();
+    SauveValeurDefaut();
     webString = ("Sauvegarde effectuée sur toutes les bornes.\n");
     webString += MajBornes("/radios.lst");
     server.send(200, "text/plain", webString);
@@ -2539,7 +2617,7 @@ bool handleSauveRadios() {                                                      
   return true;
 }
 
-bool handleJouerRadio() {                                                                             // Lecture d'une sation de radio sur la borne piloté par le web
+bool handleJouerRadio() {
   if (server.args() == 0) {
     return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   }
@@ -2597,7 +2675,7 @@ bool handleJouerRadio() {                                                       
   return(true);
 }
 
-void handleBornes() {                                                                                 // Liste des bornes via Ajax
+void handleBornes() {
   String num = "";
   String nom = "";
   String lien = "";
@@ -2658,7 +2736,7 @@ void handleBornes() {                                                           
       }
       fic.close();
       webString = "</table>\n";
-      webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2);
+      webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2) + "*" + MotPos(MyName, "_", 1);
       server.sendContent(webString);
 //      Serial.println();
 //      Serial.println(F("Données envoyées."));
@@ -2675,7 +2753,7 @@ void handleBornes() {                                                           
   server.sendHeader("Connection", "close");
 }
 
-bool handleSauveBornes() {                                                                            // Sauvegarde de la liste des bornes
+bool handleSauveBornes() {
   if (server.args() == 0) {
     return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   }
@@ -2715,7 +2793,7 @@ bool handleSauveBornes() {                                                      
       }
     }
     fic.close();
-    SauveDefaut();
+    SauveValeurDefaut();
     webString = ("Sauvegarde effectuée sur toutes les bornes.\n");
     webString += MajBornes("/bornes.lst");
     server.send(200, "text/plain", webString);
@@ -2726,7 +2804,7 @@ bool handleSauveBornes() {                                                      
   return true;
 }
 
-String MajBornes(String Fichier) {                                                                    // Sauvegarde de la liste des bornes sur les autres bornes
+String MajBornes(String Fichier) {
   IPAddress IPborne;
   String retour = "";
   String Ligne = "";
@@ -2768,7 +2846,7 @@ String MajBornes(String Fichier) {                                              
   return retour;
 }
 
-String TransmetFichier(IPAddress ipBorne, String Fichier) {                                           // Transmission des fichiers entre bornes
+String TransmetFichier(IPAddress ipBorne, String Fichier) {
   String num = "";
   String nom = "";
   String lien = "";
@@ -2849,7 +2927,7 @@ String TransmetFichier(IPAddress ipBorne, String Fichier) {                     
   }
 }
 
-void handleLogFile() {                                                                                // Lecture Ajax des logs
+void handleLogFile() {
   FS * fsys = &SPIFFS;
   String Fichier = "/events_" + String(LogMois) + ".log";
   String argName = "";
@@ -2879,14 +2957,18 @@ void handleLogFile() {                                                          
   webString += F("<meta http-equiv=\"Cache-Control\" content=\"no-cache\"/>\n");
   webString += F("<meta http-equiv=\"Content-Style-Type\" content=\"text/css\"/>\n");
   webString += F("<meta http-equiv=\"Content-Script-Type\" content=\"text/javascript\"/>\n");
-  webString += F("<meta name=\"Description\" content=\"Borne GEMI: Fichiers log\"/>\n");
+  webString += F("<meta name=\"Description\" content=\"Borne ");
+  webString += SysDomo;
+  webString += F(": Fichiers log\"/>\n");
   webString += F("<meta name=\"Author\" content=\"Jean-Luc NAPOLITANO\"/>\n");
   webString += F("<link rel=\"icon\" type=\"image/vnd.microsoft.icon\" href=\"/favicon.ico\"/>\n");
   webString += F("<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n");
   webString += F("<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n");
   webString += F("<link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\"/>\n");
   webString += F("<link rel=\"apple-touch-icon\" href=\"/favicon.png\"/>\n");
-  webString += F("<title>Borne GEMI</title>\n");
+  webString += F("<title>Borne ");
+  webString += SysDomo;
+  webString += F("</title>\n");
   webString += F("<script type=\"text/javascript\">\n");
   webString += F("  var log = new XMLHttpRequest();\n");
   webString += F("  function Fichier() {\n");
@@ -2959,7 +3041,7 @@ void handleLogFile() {                                                          
   server.sendHeader("Connection", "close");
 }
 
-void handleListeSons() {                                                                              // Liste des sons dans le SPIFFS
+void handleListeSons() {
   String file_list[20];
   String file_size[20];
 
@@ -2983,12 +3065,12 @@ void handleListeSons() {                                                        
 //    Serial.println(file_list[i]);
   }
   webString += F("</table>\n");
-  webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2);
+  webString += "*" + MyIP + " - " + MAC + " - Ver. " + String(Version) + "*" + MySSID + " - " + MotPos(MyName, "_", 2) + "*" + MotPos(MyName, "_", 1);
   server.sendContent(webString);
   server.sendHeader("Connection", "close");
 }
 
-void handleListeRadios() {                                                                            // Liste des radios
+void handleListeRadios() {
   String Lg = "";
   String Chaine = "Aucun";
   char Car;
@@ -3013,11 +3095,10 @@ void handleListeRadios() {                                                      
       server.sendHeader("Connection", "close");
     }
   }
-
 }
 
-bool handleJouerSon() {                                                                               // Joue un mp3 depuis le web
-  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                           // Au moins un argument doit être fourni
+bool handleJouerSon() {
+  if (server.args() == 0) return returnFail(F("BAD ARGS"));                                                                 // Au moins un argument doit être fourni
   String argName = "";
   String argValue = "";
   String Son = "";
@@ -3039,7 +3120,7 @@ bool handleJouerSon() {                                                         
     }
   }
   if (Vol != Volume) {
-    AudioLocalVol(Son, Vol);
+    AudioLocalVol(Son, VolDef);
   } else {
     audio.setVolume(Volume);
     AudioLocal(Son);
@@ -3058,7 +3139,7 @@ bool handleJouerSon() {                                                         
 }
 
 // Copie un fichier sous un nom différent dans le SPIFFS
-bool SPIFFS_Copy(String src, String dest) {                                                           // Copie un fichier (renomme serait plus exact)
+bool SPIFFS_Copy(String src, String dest) {
   bool ret = false;
   String Ligne = "";
 
@@ -3084,7 +3165,7 @@ bool SPIFFS_Copy(String src, String dest) {                                     
   }
 }
 
-// Fontion split : retourne le nombre de mot/phrase (chaine) trouvé
+// Fontion split : retourne le nombre de mot (chaine) trouvé
 int NbMots(String chaine, String sep) {
   int lgNb = 0, lgOld = 0, lgPos = 0;
 
@@ -3100,7 +3181,7 @@ int NbMots(String chaine, String sep) {
   return lgNb;
 }
 
-// Fonction split : renvoi le mot (chaine) demandé (commence à 1 pour le premier mot/phrase trouvée)
+// Fonction split : renvoi le mot (chaine) demandé
 String MotPos(String chaine, String sep, int lgNoMot) {
   int lgOld = 0, lgPos = 0, lgNb = 0;
   String sChaine = "";
@@ -3124,7 +3205,7 @@ String MotPos(String chaine, String sep, int lgNoMot) {
   return sChaine;
 }
 
-String macToStr(const uint8_t* mac) {                                                                 // Transforme une adresse MAC en string
+String macToStr(const uint8_t* mac) {
   String result;
   for (int i = 0; i < 6; ++i) {
     if(mac[i] < 10) {
@@ -3139,7 +3220,7 @@ String macToStr(const uint8_t* mac) {                                           
 }
 
 // Convertir une adresse IP en string
-String IPtoString(IPAddress nIP) {                                                                    // Transforme une IP en string (il y a bien plus simple, je sais)
+String IPtoString(IPAddress nIP) {
   String result;
   for (int i = 0; i < 4; ++i) {
     result += String(nIP[i]);
@@ -3149,7 +3230,7 @@ String IPtoString(IPAddress nIP) {                                              
 }
 
 // Convertir une adresse String en IP
-IPAddress StrToIP(String nIP) {                                                                       // Transforme une adresse IP de string vers IPAddress
+IPAddress StrToIP(String nIP) {
   IPAddress result;
   for (int i = 0; i < 4; ++i) {
     result[i] += MotPos(nIP,".",i+1).toInt();
@@ -3157,7 +3238,7 @@ IPAddress StrToIP(String nIP) {                                                 
   return result;
 }
 
-bool PingBorne(IPAddress adr) {                                                                       // Fait un ping à une adresse IP donnée
+bool PingBorne(IPAddress adr) {
   if (ping_start(adr, 4, 0, 0, 5)) {
     return true;
   } else {
@@ -3166,27 +3247,26 @@ bool PingBorne(IPAddress adr) {                                                 
 }
 
 /***************** UTF8-Decoder: convert UTF8-string to extended ASCII *****************/
-byte c1;                                                                                              // Last character buffer
+byte c1;                                                                                                                    // Last character buffer
 /* Convert a single Character from UTF8 to Extended ASCII
    Return "0" if a byte has to be ignored
 */
 byte utf8ascii(byte ascii) {
-  if ( ascii < 128 ) {                                                                                // Standard ASCII-set 0..0x7F handling
+  if ( ascii < 128 ) {                                                                              // Standard ASCII-set 0..0x7F handling
     c1 = 0;
     return ( ascii );
   }
 
   // get previous input
-  byte last = c1;                                                                                     // get last char
-  c1 = ascii;                                                                                         // remember actual character
+  byte last = c1;                                                                                   // get last char
+  c1 = ascii;                                                                                       // remember actual character
 
-  switch (last) {                                                                                     // conversion depending on first UTF8-character
+  switch (last) {                                                                                   // conversion depending on first UTF8-character
     case 0xC2: return  (ascii);  break;
     case 0xC3: return  (ascii | 0xC0);  break;
-    case 0x82: if (ascii == 0xAC) return (0x80);                                                      // special case Euro-symbol
+    case 0x82: if (ascii == 0xAC) return (0x80);                                                    // special case Euro-symbol
   }
-
-  return  (0);                                                                                        // otherwise: return zero, if character has to be ignored
+  return  (0);                                                                                      // otherwise: return zero, if character has to be ignored
 }
 
 // convert String object from UTF8 String to Extended ASCII
