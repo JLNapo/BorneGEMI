@@ -1,6 +1,6 @@
 /*
- * Gestion de la borne GEMI Salon
- * Cette partie de la borne execute les commandes et correspond avec GEMI pour celles qu'il ne peut traiter.
+ * Gestion de la borne *** Salon
+ * Cette partie de la borne execute les commandes et correspond avec *** pour celles qu'il ne peut traiter.
  *
  * Processeur ESP32 (DOIT ESP32 DEVKIT V1)
  * Amplificateur: MAX98357A (3w)
@@ -9,9 +9,11 @@
  *
  * Proc. IDE arduino  : DOIT ESP32 DEVKIT V1
  * Proc. RTC (heure)  : DS3231 (sauvegardé par batterie)
- * Mot de passe WEB   : jlN300855
- * Mot de passe MAJ   : jlN300855
+ * Mot de passe WEB   : ***
+ * Mot de passe MAJ   : ***
  *
+ * IMPORTANT: - Remplacer "***" par vos données.
+ *            - Remplacer GEMI ou gémi par le nom de votre système domotique
  *
  */
 
@@ -21,7 +23,6 @@
 #include <WiFiMulti.h>
 #include <Update.h>
 #include <WiFiUdp.h>
-//#include <Wire.h>
 #include "RTClib.h"
 #include <Audio.h>
 #include <SPIFFS.h>
@@ -33,7 +34,7 @@
 /* Necessaire au Réseau WiFi */
 String SysDomo = "GEMI";                                                              // Nom donné au système domotique (pour moi GEMI => Gestion Electronique de Maison Individuelle)
 String MyName = SysDomo + "_Salon";                                                   // Nom visible sur le réseau <= Si nécessaire la fonction ESP.getChipId() peut ajouter l'ID de la puce à la fin.
-int nbReseauWiFi = 4;                                                                 // Nombre de réseau disponnibles dans le lieu
+int nbReseauWiFi = 4;                                                                 // Nombre de réseaux disponnibles dans le lieu (pour moi 4)
 String ssid1 = "WiFi_1";                                                              // SSID (Nom du reseau wifi)
 String pass1 = "MDP WiFi 1";                                                          // Password (Mot de passe wifi)
 String ssid2 = "WiFi_2";                                                              // SSID (Nom du reseau wifi)
@@ -42,10 +43,10 @@ String ssid3 = "WiFi_3";                                                        
 String pass3 = "MDP WiFi 3";                                                          // Password (Mot de passe wifi)
 String ssid4 = "WiFi_4";                                                              // SSID (Nom du reseau wifi)
 String pass4 = "MDP WiFi 4";                                                          // Password (Mot de passe wifi)
-IPAddress ipAdresse(192, 168, 000, 000);                                              // IP locale de ce module (fourni par le serveur dns, normalement la Box)
-IPAddress gateway(192, 168, 000, 000);                                                // L'IP de la box
+IPAddress ipAdresse(192, 168, ***, ***);                                              // IP locale de ce module (fourni par le serveur dns, normalement la Box)
+IPAddress gateway(192, 168, ***, ***);                                                // L'IP de la box
 IPAddress subnet(255, 255, 255, 0);                                                   // Mask réseau
-IPAddress dns(192, 168, 000, 000);                                                    // L'IP de la box (ou d'un serveur NTP)
+IPAddress dns(192, 168, ***, ***);                                                    // L'IP de la box (ou d'un serveur NTP)
 const uint32_t connectTimeoutMs = 10000;                                              // Tmeout de connexion WiFiMulti
 String MyIP = "";                                                                     // Contient l'adresse IP avec séparateur (point) comme chaine
 String MAC = "";                                                                      // Adresse MAC du module (peut servir pour éventuellement paramétrer la box)
@@ -59,13 +60,13 @@ char PSS_WEB[] = "MDP WEB";                                                     
 bool Log = false;                                                                     // Enregistrer dans un fichier Log les différentes actions
 byte LogMois = 0;                                                                     // Mois en cours pour les Log
 
-String VoiceRss = F("http://api.voicerss.org/?key=b1b971dd1c88484799e674f32ffd4e66&hl=fr-fr&c=MP3&f=32khz_16bit_mono&src=");
-String UID_Nano = F("AD-6A-DF-9D-1D-4F-34-72");
-String Access_Key = F("uFvtzsB/s20inH3sEUxAbNIBucyfhdHxcu7ARpL580euQKg5kMQzzA==");
+String VoiceRss = F("http://api.voicerss.org/?key=***&hl=fr-fr&c=MP3&f=32khz_16bit_mono&src=");
+String UID_Nano = F("***");
+String Access_Key = F("***");
 
 /************************************** CE QUI EST AU DESSUS DE CETTE LIGNE EST SPECIFIQUE A CHAQUE BORNE, AU DESSOUS tout EST COMMUN A TOUTES LES BORNES *******************************************************/
 
-const char Version[] = "0.2.1.0";
+const char Version[] = "0.2.2.1";
 
 /* I2S Connexion et boutons */
 #define I2S_DOUT        25                                                            // I2S pour la connexion avec l'ampli MAX98357A
@@ -86,6 +87,9 @@ const char Version[] = "0.2.1.0";
 /* Diverses variables */
 int Volume = 15;                                                                      // Volume par défaut au premier démarrage
 int VolDef = 15;                                                                      // Volume par défaut pour certaine réponse importante (ex: alarme arrivée à son terme)
+int Grave = 6;                                                                        // Niveau des graves pour le son sortant du haut parleur
+int Medium = 4;                                                                       // Niveau des mediums pour le son sortant du haut parleur
+int Aigue = -7;                                                                        // Niveau des aigues pour le son sortant du haut parleur
 bool VolReg = false;                                                                  // Pour enregistrer après un temps le réglage du volume depuis la borne
 bool LedReg = false;                                                                  // Pour l'allumage des leds de volume
 int LedVal = 1;                                                                       // Valeur des LEDs allumées
@@ -153,7 +157,7 @@ char* dayShortStr(uint8_t day) {
 }
 
 /* Necessaire pour la date et l'heure */                                              // NTP actuel : Adresse IP de la box (si NTP a été mis dans les paramètres) ou exemple ntp.midway.ovh (80, 67, 184, 1)
-IPAddress TimeServer(192, 168, 000, 000);                                             // Pour l'heure avec l'adresse de la box internet (certaines comme free ont un serveur NTP)
+IPAddress TimeServer(192, 168, ***, ***);                                               // Pour l'heure avec l'adresse de la box internet (certaines comme free ont un serveur NTP)
 const int NTP_PACKET_SIZE = 48;                                                       // L'horodatage NTP se trouve dans les 48 premiers octets du message
 byte packetBuffer[NTP_PACKET_SIZE];                                                   // Tampon pour contenir paquets entrants et sortants
 uint16_t TimePort = 2390;                                                             // Port local pour écouter les paquets UDP Normalement écoute sur 2390 et envoi sur 123 (essai possible : 2390, 123, 8888)
@@ -341,6 +345,39 @@ void setup() {
       return server.requestAuthentication();
 //    Serial.println(F("Commande Play Web"));
     handleJouerSon();
+  });
+  server.on("/testson", []() {
+    String argName = "";
+    String argValue = "";
+    String SonTest = "";
+    int Gr = Grave;
+    int Me = Medium;
+    int Ai = Aigue;
+    if (!server.authenticate(USR_WEB, PSS_WEB))
+      return server.requestAuthentication();
+    if (server.args() > 0) {
+      for (int i=0; i<server.args(); i++) {
+        argName = server.argName(i);
+        argValue = server.arg(i);
+        if (argName == "son") {
+          SonTest = argValue;
+        }
+        if (argName == "grave") {
+          Gr = argValue.toInt();
+        }
+        if (argName == "medium") {
+          Me = argValue.toInt();
+        }
+        if (argName == "aigue") {
+          Ai = argValue.toInt();
+        }
+      }
+      audio.setTone(Gr, Me, Ai);
+      AudioLocalVol(SonTest, VolDef);
+      webString = "Son: " + SonTest + ", Grave: " + String(Gr) + "db, Medium: " + String(Me) + "db, Aigue: " + String(Ai) + "db, Vol: " + String(VolDef);
+      server.send(200, "text/plain", webString);
+      server.sendHeader("Connection", "close");
+    }
   });
   server.on("/config", []() {
     if (!server.authenticate(USR_WEB, PSS_WEB))
@@ -544,7 +581,7 @@ void setup() {
   // Set Volume
   audio.setVolume(Volume);
   audio.forceMono(true);
-  audio.setTone(6, 6, 1); // De -40db à 6db pour chaque valeur (réglage de la tonalité)
+  audio.setTone(Grave, Medium, Aigue); // De -40db à 6db pour chaque valeur (réglage de la tonalité)
   LedVolume(Volume);
 //  Serial.print(F("Volume : "));
 //  Serial.println(Volume);
@@ -610,6 +647,7 @@ void loop() {
     if (!audio.isRunning()) {
 //      Serial.println(F("Audio stop"));
       audio.setVolume(Volume);
+      audio.setTone(Grave, Medium, Aigue);
       audio.stopSong();
       AudioState = false;
       if (Fait == true) EnAttenteCde();
@@ -633,8 +671,8 @@ void loop() {
     r.trim();
     r.replace("\r", "");
     r.replace("\n", "");
-//    Serial.print(F("Recu: "));
-//    Serial.println(r);
+    Serial.print(F("Recu: "));
+    Serial.println(r);
     if(Micro == true) {
 //      Serial.println(F("Micro ouvert"));
       digitalWrite(ledEcoute, HIGH);
@@ -770,12 +808,14 @@ void loop() {
   if(digitalRead(btnPlus) == HIGH && BtnON == false) {
     Volume++;
     SetVolume(Volume);
+    AudioLocal("beep");
     BtnON = true;
 //    Serial.println(F("Bouton plus"));
   }
   if(digitalRead(btnMoins) == HIGH && BtnON == false) {
     Volume--;
     SetVolume(Volume);
+    AudioLocal("beep");
     BtnON = true;
 //    Serial.println(F("Bouton moins"));
   }
@@ -843,6 +883,10 @@ void Analyser(String Chaine) {
   for (int i=1; i<= nbElement; i++) {
     Mot1 = MotPos(MotPos(Chaine, ",", i), ":", 1);
     Mot2 = MotPos(MotPos(Chaine, ",", i), ":", 2);
+    Serial.print(F("Mot1 = "));
+    Serial.println(Mot1);
+    Serial.print(F("Mot2 = "));
+    Serial.println(Mot2);
 
     if (Mot1 == "Conserne") {
       if(Mot2 == "changeColor" || Mot2 == "objet" || Mot2 == "virtuel") {
@@ -854,16 +898,16 @@ void Analyser(String Chaine) {
       Local = Mot2;
       if (Mot2 == "salle de séjour" || Mot2 == "séjour" || Mot2 == "salle à manger") {
         if (Objet == "tv" || Objet == "lum" || Objet == "ventilo") {
-          Cde = "http://192.168.000.000/";
+          Cde = "http://192.168.***.***/";
         }
       } else if (Mot2 == "salon") {
         if (Objet == "tv") {
-          Cde = "http://192.168.000.000/";
+          Cde = "http://192.168.***.***/";
         }
       }
 //      Serial.print(F("Local: "));
 //      Serial.println(Mot2);
-    } else if (Mot1 == "object") {                                                                   /* OBJETS */
+    } else if (Mot1.startsWith("obje")) {                                                                   /* OBJETS */
       if (Mot2 == "télé" || Mot2 == "tv" || Mot2 == "télévision") {
         Objet = "tv";
       } else if (Mot2.startsWith("frig")) {
@@ -874,13 +918,25 @@ void Analyser(String Chaine) {
         Objet = "ventilo";
       } else if (Mot2.startsWith("boite") || Mot2 == "courrier") {
         Objet = "lettre";
-      } else if (Mot2 == "GÉMI" || Mot2 == "serveur") {
-        Objet = SysDomo;
+      } else if (Mot2.startsWith("alarme")) {
+        Serial.println(F("Alarme trouvée!"));
+        if (Objet == "") {
+          Objet = "alarme";
+        } else {
+          Objet2 = "alarme";
+        }
+      } else if (Mot2 == "gémi" || Mot2 == "serveur") {
+        Serial.println(F("GEMI trouvée!"));
+        if (Objet != "") {
+          Objet2 = SysDomo;
+        } else {
+          Objet = SysDomo;
+        }
       } else if (Mot2 == "adresse IP" || Mot2.startsWith("adresse")) {
         Objet = "adresse";
       } else if (Mot2 == "portail" || Mot2 == "Portillon") {
         Objet = Mot2;
-        Cde = "http://192.168.000.000/";
+        Cde = "http://192.168.***.***/";
       } else if (Mot2.startsWith("clim")) {
         Objet = "clim";
       } else if (Mot2 == "anniversaire") {
@@ -914,8 +970,8 @@ void Analyser(String Chaine) {
       } else if (Mot2 == "souhaite") {
         Ordre = "dire";
       }
-//      Serial.print(F("Ordre: "));
-//      Serial.println(Ordre);
+      Serial.print(F("Ordre: "));
+      Serial.println(Ordre);
     } else if (Mot1.startsWith("time")) {                                                             /* TEMPS */
       if (Unite[0] == "") {
         Unite[0] = Mot2;
@@ -946,12 +1002,16 @@ void Analyser(String Chaine) {
       if (Objet == "tv") {
         Cde += "tv?ch=" + Mot2;
       } else if (Objet == "alarme") {
-        if (Valeur[0] == 0) {
-          Valeur[0] = Mot2.toInt();
-        } else if (Valeur[1] == 0) {
-          Valeur[1] = Mot2.toInt();
+        if (Objet2 == SysDomo) {
+
         } else {
-          Valeur[2] = Mot2.toInt();
+          if (Valeur[0] == 0) {
+            Valeur[0] = Mot2.toInt();
+          } else if (Valeur[1] == 0) {
+            Valeur[1] = Mot2.toInt();
+          } else {
+            Valeur[2] = Mot2.toInt();
+          }
         }
       }
 //      Serial.print(F("Number: "));
@@ -984,6 +1044,20 @@ void Analyser(String Chaine) {
     AudioLocalVol("micro_on", VolDef);
     Fait = true;
   }
+  /* Alarme server GEMI */
+  Serial.print(F("Objet = "));
+  Serial.println(Objet);
+  Serial.print(F("Objet2 = "));
+  Serial.println(Objet2);
+  Serial.print(F("Ordre = "));
+  Serial.println(Ordre);
+  if (Objet == SysDomo || Objet2 == SysDomo) {
+    if (Objet == "alarme" || Objet2 == "alarme") {
+      if (Ordre == "moins") {
+        Cde = "http://192.168.***.***/***/***.php?obj=alarme&aquit=1";
+      }
+    }
+  }
   /* Télévision */
   if (Objet == "tv") {
     if (Cde.indexOf("tv?ch=")<0) {
@@ -1014,7 +1088,7 @@ void Analyser(String Chaine) {
   }
   /* Ventilateur */
   if (Objet == "ventilo") {
-    if(Cde == "") Cde = "http://192.168.000.000/";
+    if(Cde == "") Cde = "http://192.168.***.***/";
     if (Ordre == "on") {
       Cde += "von";
     } else if (Ordre == "off") {
@@ -1026,7 +1100,7 @@ void Analyser(String Chaine) {
   }
   /* Courrier */
   if (Objet == "lettre") {
-    Cde = "http://192.168.000.000/URI";
+    Cde = "http://192.168.***.***/***";
 //    Serial.print(F("Courrier: "));
 //    Serial.println(Cde);
     Fait = true;
@@ -1114,7 +1188,7 @@ void Analyser(String Chaine) {
     Fait = true;
   }
   /* Alarmes */
-  if (Objet == "alarme") {                                                                            // IMPORTANT: dans cette partie de la fonction, Valeur[0) contient toujours l'heure, Valeur[1] toujours les minutes etc.
+  if (Objet == "alarme" && Objet2 == "") {                                                                            // IMPORTANT: dans cette partie de la fonction, Valeur[0) contient toujours l'heure, Valeur[1] toujours les minutes etc.
 //    Serial.println();
 //    Serial.print(F("Ordre: "));
 //    Serial.println(Ordre);
@@ -1218,8 +1292,8 @@ void Analyser(String Chaine) {
     Fait = true;
   }
   if (Cde != "") {
-//    Serial.print(F("Commande à executer: "));
-//    Serial.println(Cde);
+    Serial.print(F("Commande à executer: "));
+    Serial.println(Cde);
     Execute(Cde);
   }
 //  if (Fait == false) {
@@ -1262,28 +1336,32 @@ String InterroHTTP(String Site) {
   char Srv[URL.length()+1];
   URL.toCharArray(Srv, URL.length()+1);
 
-//  Serial.print(F("Srv = "));
-//  Serial.println(Srv);
-//  Serial.print(F("URL = "));
-//  Serial.println(URL);
-//  Serial.print(F("URI = "));
-//  Serial.println(URI);
+  Serial.print(F("Srv = "));
+  Serial.println(Srv);
+  Serial.print(F("URL = "));
+  Serial.println(URL);
+  Serial.print(F("URI = "));
+  Serial.println(URI);
 
   if (client.connect(Srv, 80)) {
     client.print(String("GET ") + URI + " HTTP/1.1\r\n" + "Host: " + Srv + "\r\nConnection: close\r\n\r\n");
     client.setTimeout(8000);
     // Lecture de la réponse
     while (client.connected()) {
-      if (client.available()) {
+      while(client.available()>0) {
         char c = client.read();
         Ligne += String(c);
+//        Ligne += client.readStringUntil('close');
 //        Serial.print(c);
       }
     }
     client.stop();
+    Serial.println();
   } else {
     Ligne = "Connexion impossible, le serveur ne répond pas!";
   }
+  Serial.print(F("Ligne: "));
+  Serial.println(Ligne);
 
   if (Ligne == "") {
     Ligne = "La connexion a réussie, mais le serveur n'a pas donné de réponse.";
@@ -1294,22 +1372,26 @@ String InterroHTTP(String Site) {
     if (Ligne.indexOf("close") > 0) {
       Ligne = MotPos(Ligne, "close", 2).substring(5);
     }
+    if (Ligne.indexOf("  ") > 0) {
+      Ligne = MotPos(Ligne, "  ", 2);
+    }
     Ligne.trim();
   }
-//  Serial.println();
-//  Serial.print(F("Ligne: "));
-//  Serial.println(Ligne);
+  Serial.println();
+  Serial.print(F("Ligne filtrée: "));
+  Serial.println(Ligne);
   return(Ligne);
 }
 
 void AudioLocal(String sFile) {
-  unsigned long AudioTimeOut = millis() + 8000;
+  unsigned long AudioTimeOut = millis() + 3000;
   if (AudioState == true) {
     while(audio.isRunning()) {
       if (RadioON == true) break;
       if (AudioTimeOut < millis()) break;
     }
   }
+  AudioState = false;
   if(!sFile.startsWith("/")) sFile = "/" + sFile;
   if(!sFile.endsWith(".mp3")) sFile += ".mp3";
   audio.stopSong();
@@ -1321,13 +1403,14 @@ void AudioLocal(String sFile) {
 }
 
 void AudioLocalVol(String sFile, int Vol) {
-  unsigned long AudioTimeOut = millis() + 8000;
+  unsigned long AudioTimeOut = millis() + 3000;
   if (AudioState == true) {
     while(audio.isRunning()) {
       if (RadioON == true) break;
       if (AudioTimeOut < millis()) break;
     }
   }
+  AudioState = false;
   if(!sFile.startsWith("/")) sFile = "/" + sFile;
   if(!sFile.endsWith(".mp3")) sFile += ".mp3";
   audio.setVolume(Vol);
@@ -1957,10 +2040,12 @@ bool LireConfig() {
             TempOffSet = Val.toFloat();
           } else if(Key == "TestLEDStart") {
             TestLEDStart = Val == "1" ? true : false;
-//          } else if(Key == "voldef") {
-//            VolDef = Val.toInt();
-//          } else if(Key == "volume") {
-//            Volume = Val.toInt();
+          } else if(Key == "Grave") {
+            Grave = Val.toInt();
+          } else if(Key == "Medium") {
+            Medium = Val.toInt();
+          } else if(Key == "Aigue") {
+            Aigue = Val.toInt();
           }
         }
       }
@@ -2043,10 +2128,12 @@ bool SauveConfig() {
     myFile.print(F("TestLEDStart="));
     Val = TestLEDStart == true ? "1" : "0";
     myFile.println(Val);
-//    myFile.print(F("VolDef="));
-//    myFile.println(VolDef);
-//    myFile.print(F("Volume="));
-//    myFile.println(Volume);
+    myFile.print(F("Grave="));
+    myFile.println(Grave);
+    myFile.print(F("Medium="));
+    myFile.println(Medium);
+    myFile.print(F("Aigue="));
+    myFile.println(Aigue);
 
     myFile.println();
     myFile.print(F("Sauvegarde="));
@@ -2361,6 +2448,15 @@ bool handleSave() {
     if (argName == "volume") {
       Volume = argValue.toInt();
     }
+    if (argName == "grave") {
+      Grave = argValue.toInt();
+    }
+    if (argName == "medium") {
+      Medium = argValue.toInt();
+    }
+    if (argName == "aigue") {
+      Aigue = argValue.toInt();
+    }
   }
   SauveConfig();
   SauveValeurDefaut();
@@ -2376,6 +2472,8 @@ void handleAjaxParam() {
   String bLOG = Log == true ? "1" : "0";
   String tLED = TestLEDStart == true ? "1" : "0";
   String bNom = MotPos(MyName, "_", 2);
+  String file_list[20];
+  String file_size[20];
   MySSID = WiFi.SSID();
   MyIP = String(ipAdresse[0]) + "." + String(ipAdresse[1]) + "." + String(ipAdresse[2]) + "." + String(ipAdresse[3]);
 
@@ -2385,7 +2483,12 @@ void handleAjaxParam() {
   webString += VoiceRss + "," + UID_Nano + "," + Access_Key + "," + String(TempOffSet) + "," + bHEH + "," + bEH + ",";
   webString += FTPuser + "," + FTPpass + "," + OTApass + "," + String(HandShakeTimeout) + "," + bLOG + ",";
   webString += MyIP + " - " + MAC + " - Ver. " + String(Version) + "," + MySSID + " - " + bNom + "," + tLED + ",";
-  webString += String(VolDef) + "," + String(Volume);
+  webString += String(VolDef) + "," + String(Volume) + "," + String(Grave) + "," + String(Medium) + "," + String(Aigue) + ",";
+  int file_num = GetMP3List(SPIFFS, "/", 0, file_list, file_size);
+  webString += String(file_num);
+  for (int i=0; i<file_num; i++) {
+    webString += "," + file_list[i];
+  }
   server.send(200, "text/html", webString);
 }
 

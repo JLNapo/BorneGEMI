@@ -64,6 +64,18 @@
                 document.getElementById('valdef').innerHTML = texte[32];
                 document.getElementById('volume').value = texte[33];
                 document.getElementById('valvol').innerHTML = texte[33];
+                document.getElementById('grave').value = texte[34];
+                document.getElementById('valgrave').innerHTML = texte[34];
+                document.getElementById('medium').value = texte[35];
+                document.getElementById('valmedium').innerHTML = texte[35];
+                document.getElementById('aigue').value = texte[36];
+                document.getElementById('valaigue').innerHTML = texte[36];
+                var nbson = texte[37];
+                var listeson;
+                for (i=0; i<nbson; i++) {
+                  listeson += "<option value=\"" + texte[38+i] + "\"> " + texte[38+i] + " </option>\n";
+                }
+                document.getElementById('lstsons').innerHTML = listeson;
                 window.clearInterval(timerunefois);
                 ListerRadios();
                 HeureEteHiver();
@@ -113,6 +125,7 @@
         req += "&ftpuser=" + document.getElementById("ftpuser").value + "&ftppass=" + document.getElementById("ftppass").value + "&otapass=" + document.getElementById("otapass").value;
         req += "&hst=" + document.getElementById("HSTimeout").value;
         req += "&tled=" + tl + "&voldef=" + document.getElementById("voldef").value + "&volume=" + document.getElementById("volume").value;
+        req += "&grave=" + document.getElementById("grave").value + "&medium=" + document.getElementById("medium").value + "&aigue=" + document.getElementById("aigue").value;
         EnvoyerRequete();
         creer_message(div_wait,"Une commande d'enregistrement a été envoyée.<br />Merci d'attendre la fin de procédure.<br/>(peut prendre plus de 30s)");
       }
@@ -125,6 +138,22 @@
       }
       function TestLEDs(ld) {
         req = "/testled?ld=" + ld;
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              if (request.responseText != null) {
+                var texte = request.responseText;
+                document.getElementById("reponse").innerHTML = "<b>Nota: </b> " + texte;
+              }
+            }
+          }
+        }
+        request.open("GET", req, true);
+        request.send();
+      }
+      function TestSon(son) {
+        req = "/testson?son=" + document.getElementById("lstsons").value + "&grave=" + document.getElementById("grave").value + "&medium=" + document.getElementById("medium").value + "&aigue=" + document.getElementById("aigue").value;
         var request = new XMLHttpRequest();
         request.onreadystatechange = function() {
           if (request.readyState == 4) {
@@ -730,6 +759,30 @@
                         <input type="range" id="volume" name="volume" min="6" max="21" step="1" onChange="javascript:PrintValue('valvol', this.value);"/> <label id="valvol" style="vertical-align:8px;">15</label>
                       </td>
                     </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Grave</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="range" id="grave" name="grave" min="-40" max="6" step="1" onChange="javascript:PrintValue('valgrave', this.value);"/> <label id="valgrave" style="vertical-align:8px;">6</label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Medium</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="range" id="medium" name="medium" min="-40" max="6" step="1" onChange="javascript:PrintValue('valmedium', this.value);"/> <label id="valmedium" style="vertical-align:8px;">6</label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" nowrap>
+                        <font color="blue">Aigue</font>
+                      </td>
+                      <td align="left" colspan="2">
+                        <input type="range" id="aigue" name="aigue" min="-40" max="6" step="1" onChange="javascript:PrintValue('valaigue', this.value);"/> <label id="valaigue" style="vertical-align:8px;">2</label>
+                      </td>
+                    </tr>
                   </table>
                 </td>
                 <td style="width:50%;" align="center" valign="top">
@@ -867,6 +920,16 @@
                     </tr>
                     <tr>
                       <td align="left" colspan="3" class="toutpetit" id="reponse" nowrap>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left" nowrap>
+                        <label for="lstsons"><font color="blue">Son test</font></label> <select id="lstsons" name="lstsons"></select>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" nowrap>
+                        <button onclick="javascript:TestSon();"><span class="testson" style="position:relative;top:+10px;"><em>Tester le son</em></span></button>
                       </td>
                     </tr>
                   </table>
