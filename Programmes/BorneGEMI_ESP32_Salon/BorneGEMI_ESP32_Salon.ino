@@ -64,9 +64,9 @@ String VoiceRss = F("http://api.voicerss.org/?key=***&hl=fr-fr&c=MP3&f=32khz_16b
 String UID_Nano = F("***");
 String Access_Key = F("***");
 
-/************************************** CE QUI EST AU DESSUS DE CETTE LIGNE EST SPECIFIQUE A CHAQUE BORNE, AU DESSOUS tout EST COMMUN A TOUTES LES BORNES *******************************************************/
+/************************************** CE QUI EST AU DESSUS DE CETTE LIGNE EST SPECIFIQUE A CHAQUE BORNE, AU DESSOUS TOUT EST COMMUN A TOUTES LES BORNES *******************************************************/
 
-const char Version[] = "0.2.2.1";
+const char Version[] = "0.2.2.3";
 
 /* I2S Connexion et boutons */
 #define I2S_DOUT        25                                                            // I2S pour la connexion avec l'ampli MAX98357A
@@ -115,7 +115,7 @@ unsigned long HandShakeMillis;                                                  
 int HandShakeTimeout = 10000;                                                         // Nombre de millisecondes du timeout de la communication NANO/ESP32 ("HandShake")
 bool AudioState = false;                                                              // Passe à true au début de lecture d'un MP3 et à false lorsque c'est terminé.
 bool Alarme = false;                                                                  // Pour le déclenchement d'une alarme (ex: "mets une alarme dans 10mn" ou "mets une larme à 10H15")
-bool AlarmeEtape = false;                                                             // Fait sonner l'alarme une deuxième fois au bot de 5s
+bool AlarmeEtape = false;                                                             // Fait sonner l'alarme une deuxième fois au bout de 5s
 uint32_t AlarmeEnSeconde = 0;                                                         // Temps en secondes pour la programmation de l'alarme
 float TempOffSet = 0.0;                                                               // OffSet (décalage) de la température mesurée (pour tenir compte de la température dûe au fonctionnement de l'électronique)
 bool TestLEDStart = false;                                                            // Faire un test des LEDs au démarrage (oui/non => Defaut: NON) on peut régler ce paramètre ou faire un test depuis la page WEB.
@@ -524,6 +524,13 @@ void setup() {
     handleSauveBornes();
     server.sendHeader("Connection", "close");
   });
+  server.on("/restart", []() {
+    if (!server.authenticate(USR_WEB, PSS_WEB))
+      return server.requestAuthentication();
+    server.sendHeader("Connection", "close");
+    Attend(100);
+    ESP.restart();
+  });
 
   /* Necessaire à la mise à jour par le WEB */
   server.on("/firmware", HTTP_GET, []() {
@@ -545,6 +552,7 @@ void setup() {
       server.send(200, "text/html", F("Erreur utilisateur ou mot de passe !"));
     }
   });
+
   /* gestion du téléchargement du fichier de firmware */
   server.on("/update", HTTP_POST, []() {
     server.sendHeader("Connection", "close");
@@ -1214,11 +1222,12 @@ void Analyser(String Chaine) {
 //        Serial.println(F("Alarme à une heure précise"));
         if (Valeur[0] != 0 && Unite[0].startsWith("heure")) {
           if (Valeur[1] != 0 && (Unite[1].startsWith("minute") || Unite[1] == "")) {                  // On donne des heures et des minutes (en précisant le mot minute ou pas)
-            if (Valeur[2] == 0) Valeur[2] = now.second();                                             // Là c'est au choix, on met les secondes pour secondes sinon on met en REM
+//            if (Valeur[2] == 0) Valeur[2] = now.second();                                             // Là c'est au choix, on met les secondes pour secondes sinon on met en REM
             AlarmeEnSeconde = HeureEnSeconde(Valeur[0], Valeur[1], Valeur[2]);                        // Déclenchement à la seconde près
             Alarme = true;
             EcrireAlarme();                                                                           // On sauvegarde l'alarme, en cas de reboot celle-ci court toujours (fichier lu au démarrage)
-            AudioLocalVol("alarmeon", VolDef);                                                        // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+            AudioHostVol("l'alarme est programmée pour " + String(Valeur[0]) + ":" + String(Valeur[1]), VolDef);
+//            AudioLocalVol("alarmeon", VolDef);                                                        // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
             AlarmeEtape = true;
             Fait = true;
             Cde = "";
@@ -1236,7 +1245,8 @@ void Analyser(String Chaine) {
           Alarme = true;
           AlarmeEtape = true;
           EcrireAlarme();
-          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          AudioHostVol("l'alarme sera déclenchée à " + SecondeEnHeure(AlarmeEnSeconde), VolDef);
+//          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Fait = true;
           Cde = "";
 //          Serial.print(F("Alarme après HM: "));
@@ -1250,7 +1260,8 @@ void Analyser(String Chaine) {
           Alarme = true;
           AlarmeEtape = true;
           EcrireAlarme();
-          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          AudioHostVol("l'alarme sera déclenchée à " + SecondeEnHeure(AlarmeEnSeconde), VolDef);
+//          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Fait = true;
           Cde = "";
 //          Serial.print(F("Alarme après HS: "));
@@ -1263,11 +1274,12 @@ void Analyser(String Chaine) {
           Alarme = true;
           AlarmeEtape = true;
           EcrireAlarme();
-          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          AudioHostVol("alarme dans " + String(Valeur[1]) + " minute, à partir de maintenant.", VolDef);
+//          AudioLocalVol("alarmeon", VolDef);                                                          // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Cde = "";
 //          Serial.print(F("Alarme après MS: "));
 //          Serial.println(AlarmeEnSeconde);
-        } else if (Valeur[0] != 0 && (Unite[0].startsWith("seconde"))) {                              // On donne le temps seulement en secondes
+        } else if (Valeur[0] != 0 && (Unite[0].startsWith("seconde"))) {                                // On donne le temps seulement en secondes
           Valeur[2] = Valeur[0];
           Valeur[1] = 0;
           Valeur[0] = 0;
@@ -1275,7 +1287,8 @@ void Analyser(String Chaine) {
           Alarme = true;
           AlarmeEtape = true;
           EcrireAlarme();
-          AudioLocalVol("alarmeon", VolDef);                                                              // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
+          AudioHostVol("alarme dans " + String(Valeur[2]) + " seconde, à partir de maintenant.", VolDef);
+//          AudioLocalVol("alarmeon", VolDef);                                                              // Peu importe le réglage du volume, la mise en service de l'alarme se fait assez fort (audible de loin)
           Cde = "";
 //          Serial.print(F("Alarme après S: "));
 //          Serial.println(AlarmeEnSeconde);
@@ -1384,7 +1397,7 @@ String InterroHTTP(String Site) {
 }
 
 void AudioLocal(String sFile) {
-  unsigned long AudioTimeOut = millis() + 3000;
+  unsigned long AudioTimeOut = millis() + 5000;
   if (AudioState == true) {
     while(audio.isRunning()) {
       if (RadioON == true) break;
@@ -1403,7 +1416,7 @@ void AudioLocal(String sFile) {
 }
 
 void AudioLocalVol(String sFile, int Vol) {
-  unsigned long AudioTimeOut = millis() + 3000;
+  unsigned long AudioTimeOut = millis() + 5000;
   if (AudioState == true) {
     while(audio.isRunning()) {
       if (RadioON == true) break;
@@ -1423,7 +1436,19 @@ void AudioLocalVol(String sFile, int Vol) {
 }
 
 void AudioHost(String URL) {
-  if (!URL.startsWith("http")) URL = VoiceRss + URL;
+  if (!URL.startsWith("http")) URL = VoiceRss + URL;                                                    // Si ce n'est pas une URL, c'est que c'est du texte à dire en vocale
+  audio.stopSong();
+  audio.connecttohost(URL.c_str());
+  AudioState = true;
+  Attend(100);
+//  Serial.print(F("Play : "));
+//  Serial.println(URL);
+}
+
+void AudioHostVol(String URL, int Vol) {
+  if (!URL.startsWith("http")) URL = VoiceRss + URL;                                                    // Si ce n'est pas une URL, c'est que c'est du texte à dire en vocale
+  audio.stopSong();
+  audio.setVolume(Vol);
   audio.stopSong();
   audio.connecttohost(URL.c_str());
   AudioState = true;
@@ -1810,6 +1835,15 @@ uint32_t HeureEnSeconde(byte H, byte M, byte S) {
            T += M * 60;
            T += S;
   return(T);
+}
+
+String SecondeEnHeure(uint32_t s) {
+  byte H, M;
+  H = int(s / 3600);
+  s = s - (H * 3600);
+  M = int(s / 60);
+  s = s - (M * 60);
+  return(twoDigits(H) + ":" + twoDigits(M) + ":" + twoDigits(s));
 }
 
 String DateDuJourLong() {
